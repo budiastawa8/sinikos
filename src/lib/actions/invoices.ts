@@ -140,7 +140,10 @@ export async function syncMidtransStatusAction(
     if ("pending" in result && result.pending) {
       return {
         ok: true,
-        message: result.message ?? `Status: ${result.status}`,
+        message:
+          "message" in result && result.message
+            ? result.message
+            : "Pembayaran belum lunas di Midtrans",
       };
     }
     return { ok: true, message: "Status diperbarui" };
