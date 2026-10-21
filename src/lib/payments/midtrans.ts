@@ -212,8 +212,15 @@ export async function handleMidtransNotification(body: {
     where: { midtransOrderId: orderId },
     include: { organization: true },
   });
+
+  // Midtrans "Test notification URL" mengirim order_id yang tidak ada di DB.
+  // Tetap 200 agar tes URL lulus; notifikasi sungguhan tetap diproses di bawah.
   if (!invoice) {
-    return { ok: false as const, error: "Invoice tidak ditemukan" };
+    return {
+      ok: true as const,
+      ignored: true as const,
+      reason: "unknown_order",
+    };
   }
 
   const serverKey = getOrgServerKey(invoice.organization);
