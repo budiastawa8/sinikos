@@ -1,0 +1,146 @@
+import { notFound } from "next/navigation";
+import { requireOrg } from "@/lib/tenant";
+import { db } from "@/lib/db";
+import {
+  createRoomAction,
+  updateRoomStatusAction,
+} from "@/lib/actions/properties";
+import { formatRupiah } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+export default async function PropertyDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const { organizationId } = await requireOrg();
+  const property = await db.property.findFirst({
+    where: { id, organizationId },
+    include: { rooms: { orderBy: { code: "asc" } } },
+  });
+  if (!property) notFound();
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          {property.name}
+        </h1>
+        <p className="text-sm text-muted-foreground sm:text-base">
+          {property.address || "Tanpa alamat"}
+        </p>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle>Kamar</CardTitle>
+            <CardDescription>{property.rooms.length} kamar</CardDescription>
+          </CardHeader>
+          <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Kode</TableHead>
+                  <TableHead>Harga</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {property.rooms.map((room) => (
+                  <TableRow key={room.id}>
+                    <TableCell className="font-medium">{room.code}</TableCell>
+                    <TableCell>{formatRupiah(room.price)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          room.status === "AVAILABLE"
+                            ? "success"
+                            : room.status === "OCCUPIED"
+                              ? "warning"
+                              : "secondary"
+                        }
+                      >
+                        {room.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <form action={updateRoomStatusAction} className="flex gap-2">
+                        <input type="hidden" name="roomId" value={room.id} />
+                        <select
+                          name="status"
+                          defaultValue={room.status}
+                          className="h-9 rounded-md border px-2 text-sm"
+                        >
+                          <option value="AVAILABLE">AVAILABLE</option>
+                          <option value="OCCUPIED">OCCUPIED</option>
+                          <option value="MAINTENANCE">MAINTENANCE</option>
+                        </select>
+                        <Button type="submit" size="sm" variant="outline">
+                          Update
+                        </Button>
+                      </form>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tambah kamar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={createRoomAction} className="space-y-4">
+              <input type="hidden" name="propertyId" value={property.id} />
+              <div className="space-y-2">
+                <Label htmlFor="code">Kode kamar</Label>
+                <Input id="code" name="code" required placeholder="A01" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">Harga sewa / bulan</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  required
+                  min={1}
+                  placeholder="1500000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Catatan</Label>
+                <Input id="notes" name="notes" />
+              </div>
+              <Button type="submit" className="w-full">
+                Simpan kamar
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,124 @@
+import { requireOrg } from "@/lib/tenant";
+import { db } from "@/lib/db";
+import {
+  createTenantAction,
+  deleteTenantAction,
+} from "@/lib/actions/properties";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+export default async function TenantsPage() {
+  const { organizationId } = await requireOrg();
+  const tenants = await db.tenant.findMany({
+    where: { organizationId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      leases: {
+        where: { status: "ACTIVE" },
+        take: 1,
+        include: { room: true },
+      },
+    },
+  });
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Penyewa
+        </h1>
+        <p className="text-sm text-muted-foreground sm:text-base">
+          Data penyewa dan nomor WhatsApp untuk tagihan.
+        </p>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle>Daftar penyewa</CardTitle>
+            <CardDescription>{tenants.length} penyewa</CardDescription>
+          </CardHeader>
+          <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>WhatsApp</TableHead>
+                  <TableHead>Kamar aktif</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tenants.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell>{t.phone}</TableCell>
+                    <TableCell>{t.leases[0]?.room.code ?? "-"}</TableCell>
+                    <TableCell>
+                      <form action={deleteTenantAction}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <Button type="submit" size="sm" variant="ghost">
+                          Hapus
+                        </Button>
+                      </form>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tambah penyewa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={createTenantAction} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama</Label>
+                <Input id="name" name="name" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Nomor WhatsApp</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  required
+                  placeholder="0812xxxxxxx"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email (opsional)</Label>
+                <Input id="email" name="email" type="email" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Catatan</Label>
+                <Input id="notes" name="notes" />
+              </div>
+              <Button type="submit" className="w-full">
+                Simpan
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

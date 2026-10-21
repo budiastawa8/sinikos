@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum LeaseStatus {
+  ACTIVE
+  ENDED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum WhatsAppStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+  accounts     Account[]
+  sessions     Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id                     String       @id @default(cuid())
+  name                   String
+  billingDay             Int          @default(1)
+  whatsappEnabled        Boolean      @default(true)
+  reminderDaysBefore     Int          @default(3)
+  whatsappPayInfo        String       @default("Silakan transfer ke rekening yang tertera / hubungi pengelola.")
+  /// Midtrans milik organisasi (model B) — server/client key disimpan terenkripsi
+  midtransEnabled        Boolean      @default(false)
+  midtransIsProduction   Boolean      @default(false)
+  midtransServerKeyEnc   String?
+  midtransClientKeyEnc   String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  memberships            Membership[]
+  properties             Property[]
+  tenants                Tenant[]
+  leases                 Lease[]
+  invoices               Invoice[]
+  whatsappLogs           WhatsAppMessageLog[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(OWNER)
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Property {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  address        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rooms          Room[]
+
+  @@index([organizationId])
+}
+
+model Room {
+  id         String     @id @default(cuid())
+  propertyId String
+  code       String
+  price      Int
+  status     RoomStatus @default(AVAILABLE)
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  property   Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  leases     Lease[]
+
+  @@unique([propertyId, code])
+  @@index([propertyId])
+}
+
+model Tenant {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String
+  email          String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leases         Lease[]
+
+  @@index([organizationId])
+}
+
+model Lease {
+  id             String       @id @default(cuid())
+  organizationId String
+  roomId         String
+  tenantId       String
+  startDate      DateTime
+  endDate        DateTime?
+  monthlyRent    Int
+  status         LeaseStatus  @default(ACTIVE)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  room           Room         @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invoices       Invoice[]
+
+  @@index([organizationId])
+  @@index([roomId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  organizationId  String
+  leaseId         String
+  periodYear      Int
+  periodMonth     Int
+  amount          Int
+  amountPaid      Int           @default(0)
+  dueDate         DateTime
+  status          InvoiceStatus @default(UNPAID)
+  midtransOrderId String?       @unique
+  paymentUrl      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lease           Lease         @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+  whatsappLogs    WhatsAppMessageLog[]
+
+  @@unique([leaseId, periodYear, periodMonth])
+  @@index([organizationId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  amount      Int
+  method      String   @default("TRANSFER")
+  paidAt      DateTime @default(now())
+  notes       String?
+  providerRef String?
+  createdAt   DateTime @default(now())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model WhatsAppMessageLog {
+  id             String         @id @default(cuid())
+  organizationId String
+  invoiceId      String?
+  phone          String
+  message        String
+  status         WhatsAppStatus @default(PENDING)
+  providerRef    String?
+  errorMessage   String?
+  sentAt         DateTime?
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice        Invoice?       @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([invoiceId])
+}

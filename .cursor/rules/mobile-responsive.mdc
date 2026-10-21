@@ -1,0 +1,28 @@
+---
+description: Setiap perubahan UI SiniKos harus ramah mobile (HP, tablet, desktop)
+alwaysApply: true
+---
+
+# Mobile-first UI (SiniKos)
+
+Setiap perubahan tampilan atau halaman baru **wajib** ramah terhadap viewport mobile, tablet, dan desktop.
+
+## Wajib
+
+- Desain dengan pendekatan mobile-first; uji secara mental di lebar ~375px dan ~768px.
+- Navigasi app: sidebar desktop; di mobile gunakan header + drawer/sheet (jangan sidebar tetap `w-64` yang menekan konten).
+- Hindari layout horizontal kaku tanpa breakpoint (`flex` + lebar tetap yang overflow di HP).
+- Tabel lebar harus dalam kontainer `overflow-x-auto`; aksi baris boleh ditumpuk di mobile.
+- Form/kartu: lebar penuh di mobile dengan padding aman (`px-4`+); jangan mengandalkan lebar desktop saja.
+- Touch target cukup besar (tinggi kontrol ~40px / `h-10` ke atas).
+- Jangan mengorbankan keterbacaan: teks dan spacing tetap nyaman di HP.
+
+## Dilarang
+
+- Menambah fitur UI yang hanya layak di desktop tanpa alternatif mobile.
+- Mengasumsikan hover-only sebagai satu-satunya cara interaksi.
+
+## Saat selesai mengubah UI
+
+- Pastikan halaman terkait masih usable tanpa scroll horizontal yang tidak perlu (kecuali tabel yang memang di-scroll).
+---

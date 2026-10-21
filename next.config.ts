@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Auth/DB routes are request-time; keep classic App Router behavior for MVP.
   turbopack: {
     rules: {
       "*.css": {
