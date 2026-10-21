@@ -1,10 +1,8 @@
 import { requireOrg } from "@/lib/tenant";
-import {
-  updateMidtransSettingsAction,
-  updateSettingsAction,
-} from "@/lib/actions/settings";
+import { updateSettingsAction } from "@/lib/actions/settings";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
 import { decryptSecret, maskSecret } from "@/lib/crypto/secrets";
+import { MidtransSettingsForm } from "@/components/midtrans-settings-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,84 +140,13 @@ export default async function SettingsPage() {
           )}
         </CardHeader>
         <CardContent>
-          <form action={updateMidtransSettingsAction} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <input
-                id="midtransEnabled"
-                name="midtransEnabled"
-                type="checkbox"
-                defaultChecked={organization.midtransEnabled}
-                className="size-4 rounded border"
-              />
-              <Label htmlFor="midtransEnabled">
-                Aktifkan link bayar Midtrans
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                id="midtransIsProduction"
-                name="midtransIsProduction"
-                type="checkbox"
-                defaultChecked={organization.midtransIsProduction}
-                className="size-4 rounded border"
-              />
-              <Label htmlFor="midtransIsProduction">
-                Mode Production (matikan untuk Sandbox / SB-…)
-              </Label>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="midtransServerKey">Server Key</Label>
-              <Input
-                id="midtransServerKey"
-                name="midtransServerKey"
-                type="password"
-                autoComplete="off"
-                placeholder={
-                  serverHint
-                    ? `Tersimpan: ${serverHint} — isi untuk diganti`
-                    : "Mid-server-… atau SB-Mid-server-…"
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="midtransClientKey">Client Key (opsional)</Label>
-              <Input
-                id="midtransClientKey"
-                name="midtransClientKey"
-                type="password"
-                autoComplete="off"
-                placeholder={
-                  clientHint
-                    ? `Tersimpan: ${clientHint} — isi untuk diganti`
-                    : "Mid-client-… atau SB-Mid-client-…"
-                }
-              />
-            </div>
-
-            <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">Notification URL</p>
-              <p className="mt-1 break-all font-mono text-xs">{notifyUrl}</p>
-              <p className="mt-2">
-                Di dashboard Midtrans Anda: Settings → Configuration → tempel URL
-                di atas. Aktifkan juga payment channels (VA / e-wallet / QRIS).
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                id="clearMidtransKeys"
-                name="clearMidtransKeys"
-                type="checkbox"
-                className="size-4 rounded border"
-              />
-              <Label htmlFor="clearMidtransKeys">
-                Hapus key tersimpan & nonaktifkan Midtrans
-              </Label>
-            </div>
-
-            <Button type="submit">Simpan Midtrans</Button>
-          </form>
+          <MidtransSettingsForm
+            enabled={organization.midtransEnabled}
+            isProduction={organization.midtransIsProduction}
+            serverHint={serverHint}
+            clientHint={clientHint}
+            notifyUrl={notifyUrl}
+          />
         </CardContent>
       </Card>
     </div>

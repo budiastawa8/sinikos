@@ -4,9 +4,14 @@ import { revalidatePath } from "next/cache";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import {
+  decryptSecret,
   encryptSecret,
   normalizeEnvLike,
 } from "@/lib/crypto/secrets";
+
+export type SettingsActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
 
 export async function updateSettingsAction(formData: FormData) {
   const { organizationId } = await requireOrg();
@@ -45,86 +50,141 @@ export async function updateSettingsAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function updateMidtransSettingsAction(formData: FormData) {
-  const { organizationId, organization } = await requireOrg();
+function keyModeError(serverKey: string, isProduction: boolean): string | null {
+  const looksServer =
+    serverKey.startsWith("Mid-server-") ||
+    serverKey.startsWith("SB-Mid-server-");
+  if (!looksServer) {
+    return "Server Key tidak valid. Harus diawali Mid-server- atau SB-Mid-server-";
+  }
+  const isSandboxKey = serverKey.startsWith("SB-");
+  if (isProduction && isSandboxKey) {
+    return "Key Sandbox (SB-…) tidak cocok dengan mode Production. Matikan Production atau pakai key Production.";
+  }
+  if (!isProduction && !isSandboxKey) {
+    return "Key Production tidak cocok dengan mode Sandbox. Untuk Sandbox, tempel Server Key dari dashboard.sandbox.midtrans.com (awalan SB-Mid-server-).";
+  }
+  return null;
+}
 
-  const midtransEnabled = formData.get("midtransEnabled") === "on";
-  const midtransIsProduction = formData.get("midtransIsProduction") === "on";
-  const serverKeyRaw = normalizeEnvLike(
-    String(formData.get("midtransServerKey") ?? ""),
-  );
-  const clientKeyRaw = normalizeEnvLike(
-    String(formData.get("midtransClientKey") ?? ""),
-  );
-  const clearKeys = formData.get("clearMidtransKeys") === "on";
+export async function updateMidtransSettingsAction(
+  formData: FormData,
+): Promise<SettingsActionResult> {
+  try {
+    const { organizationId, organization } = await requireOrg();
 
-  if (midtransEnabled && !serverKeyRaw && !organization.midtransServerKeyEnc) {
-    throw new Error(
-      "Server Key Midtrans wajib diisi saat mengaktifkan pembayaran online",
+    const midtransEnabled = formData.get("midtransEnabled") === "on";
+    const midtransIsProduction =
+      formData.get("midtransIsProduction") === "on";
+    const serverKeyRaw = normalizeEnvLike(
+      String(formData.get("midtransServerKey") ?? ""),
     );
-  }
+    const clientKeyRaw = normalizeEnvLike(
+      String(formData.get("midtransClientKey") ?? ""),
+    );
+    const clearKeys = formData.get("clearMidtransKeys") === "on";
 
-  if (serverKeyRaw) {
-    const looksServer =
-      serverKeyRaw.startsWith("Mid-server-") ||
-      serverKeyRaw.startsWith("SB-Mid-server-");
-    if (!looksServer) {
-      throw new Error(
-        "Server Key tidak valid. Harus diawali Mid-server- atau SB-Mid-server-",
-      );
+    if (clearKeys) {
+      await db.organization.update({
+        where: { id: organizationId },
+        data: {
+          midtransEnabled: false,
+          midtransIsProduction: false,
+          midtransServerKeyEnc: null,
+          midtransClientKeyEnc: null,
+        },
+      });
+      revalidatePath("/settings");
+      revalidatePath("/invoices");
+      return { ok: true };
     }
-    const isSandboxKey = serverKeyRaw.startsWith("SB-");
-    if (midtransIsProduction && isSandboxKey) {
-      throw new Error(
-        "Key Sandbox tidak cocok dengan mode Production. Matikan Production atau pakai key Production.",
-      );
-    }
-    if (!midtransIsProduction && !isSandboxKey) {
-      throw new Error(
-        "Key Production tidak cocok dengan mode Sandbox. Aktifkan Production atau pakai key SB-…",
-      );
-    }
-  }
 
-  if (clientKeyRaw) {
-    const looksClient =
-      clientKeyRaw.startsWith("Mid-client-") ||
-      clientKeyRaw.startsWith("SB-Mid-client-");
-    if (!looksClient) {
-      throw new Error(
-        "Client Key tidak valid. Harus diawali Mid-client- atau SB-Mid-client-",
-      );
+    if (midtransEnabled && !serverKeyRaw && !organization.midtransServerKeyEnc) {
+      return {
+        ok: false,
+        error:
+          "Server Key Midtrans wajib diisi saat mengaktifkan pembayaran online",
+      };
     }
-  }
 
-  const data: {
-    midtransEnabled: boolean;
-    midtransIsProduction: boolean;
-    midtransServerKeyEnc?: string | null;
-    midtransClientKeyEnc?: string | null;
-  } = {
-    midtransEnabled,
-    midtransIsProduction,
-  };
+    // Resolve the server key that will be active after save
+    let effectiveServerKey = serverKeyRaw;
+    if (!effectiveServerKey && organization.midtransServerKeyEnc) {
+      try {
+        effectiveServerKey = normalizeEnvLike(
+          decryptSecret(organization.midtransServerKeyEnc),
+        );
+      } catch {
+        return {
+          ok: false,
+          error:
+            "Key lama tidak bisa dibaca. Tempel ulang Server Key Sandbox (SB-Mid-server-…).",
+        };
+      }
+    }
 
-  if (clearKeys) {
-    data.midtransServerKeyEnc = null;
-    data.midtransClientKeyEnc = null;
-    data.midtransEnabled = false;
-  } else {
+    if (midtransEnabled && effectiveServerKey) {
+      const modeErr = keyModeError(effectiveServerKey, midtransIsProduction);
+      if (modeErr) {
+        return { ok: false, error: modeErr };
+      }
+    }
+
+    if (serverKeyRaw) {
+      const modeErr = keyModeError(serverKeyRaw, midtransIsProduction);
+      if (modeErr) return { ok: false, error: modeErr };
+    }
+
+    if (clientKeyRaw) {
+      const looksClient =
+        clientKeyRaw.startsWith("Mid-client-") ||
+        clientKeyRaw.startsWith("SB-Mid-client-");
+      if (!looksClient) {
+        return {
+          ok: false,
+          error:
+            "Client Key tidak valid. Harus diawali Mid-client- atau SB-Mid-client-",
+        };
+      }
+      const clientIsSandbox = clientKeyRaw.startsWith("SB-");
+      if (clientIsSandbox === midtransIsProduction) {
+        return {
+          ok: false,
+          error:
+            "Client Key harus dari environment yang sama (Sandbox pakai SB-…, Production tanpa SB-).",
+        };
+      }
+    }
+
+    const data: {
+      midtransEnabled: boolean;
+      midtransIsProduction: boolean;
+      midtransServerKeyEnc?: string | null;
+      midtransClientKeyEnc?: string | null;
+    } = {
+      midtransEnabled,
+      midtransIsProduction,
+    };
+
     if (serverKeyRaw) {
       data.midtransServerKeyEnc = encryptSecret(serverKeyRaw);
     }
     if (clientKeyRaw) {
       data.midtransClientKeyEnc = encryptSecret(clientKeyRaw);
     }
+
+    await db.organization.update({
+      where: { id: organizationId },
+      data,
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/invoices");
+    return { ok: true };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Gagal menyimpan Midtrans",
+    };
   }
-
-  await db.organization.update({
-    where: { id: organizationId },
-    data,
-  });
-
-  revalidatePath("/settings");
-  revalidatePath("/invoices");
 }
