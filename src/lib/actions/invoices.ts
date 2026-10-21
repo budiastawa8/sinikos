@@ -76,17 +76,31 @@ export async function resendWhatsAppAction(formData: FormData) {
 }
 
 /** Buat / perbarui link bayar Midtrans (Snap) untuk penyewa */
-export async function createPaymentLinkAction(formData: FormData) {
-  const { organizationId } = await requireOrg();
-  const invoiceId = String(formData.get("invoiceId") ?? "");
+export async function createPaymentLinkAction(
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  try {
+    const { organizationId } = await requireOrg();
+    const invoiceId = String(formData.get("invoiceId") ?? "");
 
-  const invoice = await db.invoice.findFirst({
-    where: { id: invoiceId, organizationId },
-  });
-  if (!invoice) throw new Error("Tagihan tidak ditemukan");
+    const invoice = await db.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
+    });
+    if (!invoice) {
+      return { ok: false, error: "Tagihan tidak ditemukan" };
+    }
 
-  const result = await createSnapPayment(invoiceId);
-  revalidatePath("/invoices");
-  if (!result.ok) throw new Error(result.error);
-  return { url: result.redirectUrl };
+    const result = await createSnapPayment(invoiceId);
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+
+    revalidatePath("/invoices");
+    return { ok: true, url: result.redirectUrl };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Gagal membuat link bayar",
+    };
+  }
 }

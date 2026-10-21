@@ -27,8 +27,15 @@ export function PayLinkButton({
             const fd = new FormData();
             fd.set("invoiceId", invoiceId);
             const result = await createPaymentLinkAction(fd);
+            if (!result.ok) {
+              toast.error(result.error);
+              return;
+            }
             const url = result.url || existingUrl;
-            if (!url) throw new Error("Link tidak tersedia");
+            if (!url) {
+              toast.error("Link tidak tersedia");
+              return;
+            }
             await navigator.clipboard.writeText(url).catch(() => undefined);
             toast.success("Link bayar siap — dibuka di tab baru");
             window.open(url, "_blank", "noopener,noreferrer");
