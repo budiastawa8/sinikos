@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { GenerateInvoicesButton } from "@/components/generate-invoices-button";
 import { PayLinkButton } from "@/components/pay-link-button";
+import { SyncMidtransButton } from "@/components/sync-midtrans-button";
 import { isOrgMidtransConfigured } from "@/lib/payments/midtrans";
 
 export default async function InvoicesPage() {
@@ -139,10 +140,15 @@ export default async function InvoicesPage() {
                       <TableCell>
                         <div className="flex min-w-[12rem] flex-col gap-2">
                           {inv.status !== "PAID" && midtransReady && (
-                            <PayLinkButton
-                              invoiceId={inv.id}
-                              existingUrl={inv.paymentUrl}
-                            />
+                            <>
+                              <PayLinkButton
+                                invoiceId={inv.id}
+                                existingUrl={inv.paymentUrl}
+                              />
+                              {inv.midtransOrderId && (
+                                <SyncMidtransButton invoiceId={inv.id} />
+                              )}
+                            </>
                           )}
                           {inv.status !== "PAID" && (
                             <form

@@ -8,7 +8,10 @@ import {
   generateInvoicesForOrg,
   sendInvoiceWhatsApp,
 } from "@/lib/billing/generate";
-import { createSnapPayment } from "@/lib/payments/midtrans";
+import {
+  createSnapPayment,
+  syncInvoicePaymentStatus,
+} from "@/lib/payments/midtrans";
 
 function deriveStatus(amount: number, amountPaid: number, dueDate: Date) {
   if (amountPaid >= amount) return InvoiceStatus.PAID;
@@ -101,6 +104,50 @@ export async function createPaymentLinkAction(
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Gagal membuat link bayar",
+    };
+  }
+}
+
+export async function syncMidtransStatusAction(
+  formData: FormData,
+): Promise<
+  | { ok: true; message: string }
+  | { ok: false; error: string }
+> {
+  try {
+    const { organizationId } = await requireOrg();
+    const invoiceId = String(formData.get("invoiceId") ?? "");
+    const invoice = await db.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
+    });
+    if (!invoice) {
+      return { ok: false, error: "Tagihan tidak ditemukan" };
+    }
+
+    const result = await syncInvoicePaymentStatus(invoiceId);
+    revalidatePath("/invoices");
+    revalidatePath("/dashboard");
+
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+    if ("alreadyPaid" in result && result.alreadyPaid) {
+      return { ok: true, message: "Tagihan sudah lunas" };
+    }
+    if ("paid" in result && result.paid) {
+      return { ok: true, message: "Pembayaran terdeteksi — tagihan dilunasi" };
+    }
+    if ("pending" in result && result.pending) {
+      return {
+        ok: true,
+        message: result.message ?? `Status: ${result.status}`,
+      };
+    }
+    return { ok: true, message: "Status diperbarui" };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Gagal cek status",
     };
   }
 }
