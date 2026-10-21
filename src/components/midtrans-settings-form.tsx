@@ -59,16 +59,17 @@ export function MidtransSettingsForm({
           className="size-4 rounded border"
         />
         <Label htmlFor="midtransIsProduction">
-          Mode Production (matikan untuk Sandbox / SB-…)
+          Mode Production (matikan untuk Sandbox)
         </Label>
       </div>
 
       <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-        Untuk Sandbox: matikan Mode Production, lalu tempel key dari{" "}
-        <span className="font-medium">dashboard.sandbox.midtrans.com</span>{" "}
-        (awalan <code className="rounded bg-white/80 px-1">SB-Mid-server-</code>
-        ). Key Production (<code className="rounded bg-white/80 px-1">Mid-server-</code>
-        ) tidak bisa dipakai di Sandbox.
+        Mode ditentukan checkbox di atas, bukan awalan key. Untuk Sandbox:
+        matikan Production, salin Server/Client Key dari{" "}
+        <span className="font-medium">dashboard.sandbox.midtrans.com</span>, lalu
+        simpan. Key Sandbox dan Production bisa tampak mirip (
+        <code className="rounded bg-white/80 px-1">Mid-server-…</code>
+        ).
       </p>
 
       <div className="space-y-2">
@@ -80,8 +81,8 @@ export function MidtransSettingsForm({
           autoComplete="off"
           placeholder={
             serverHint
-              ? `Tersimpan: ${serverHint} — wajib isi ulang jika ganti Sandbox/Production`
-              : "SB-Mid-server-… (sandbox) atau Mid-server-… (production)"
+              ? `Tersimpan: ${serverHint} — isi ulang jika ganti akun/mode`
+              : "Mid-server-…"
           }
         />
       </div>
@@ -95,7 +96,7 @@ export function MidtransSettingsForm({
           placeholder={
             clientHint
               ? `Tersimpan: ${clientHint} — isi untuk diganti`
-              : "SB-Mid-client-… atau Mid-client-…"
+              : "Mid-client-…"
           }
         />
       </div>
@@ -104,8 +105,9 @@ export function MidtransSettingsForm({
         <p className="font-medium text-foreground">Notification URL</p>
         <p className="mt-1 break-all font-mono text-xs">{notifyUrl}</p>
         <p className="mt-2">
-          Di dashboard Midtrans (Sandbox atau Production sesuai mode): tempel URL
-          ini sebagai Payment Notification URL, lalu aktifkan payment channels.
+          Di dashboard Midtrans yang sama dengan mode (Sandbox/Production):
+          tempel sebagai Payment Notification URL, lalu aktifkan payment
+          channels.
         </p>
       </div>
 

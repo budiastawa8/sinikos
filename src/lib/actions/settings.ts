@@ -50,19 +50,23 @@ export async function updateSettingsAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-function keyModeError(serverKey: string, isProduction: boolean): string | null {
+/** Format key saja — Sandbox/Production dipilih lewat checkbox, bukan prefix SB-. */
+function invalidServerKey(serverKey: string): string | null {
   const looksServer =
     serverKey.startsWith("Mid-server-") ||
     serverKey.startsWith("SB-Mid-server-");
   if (!looksServer) {
     return "Server Key tidak valid. Harus diawali Mid-server- atau SB-Mid-server-";
   }
-  const isSandboxKey = serverKey.startsWith("SB-");
-  if (isProduction && isSandboxKey) {
-    return "Key Sandbox (SB-…) tidak cocok dengan mode Production. Matikan Production atau pakai key Production.";
-  }
-  if (!isProduction && !isSandboxKey) {
-    return "Key Production tidak cocok dengan mode Sandbox. Untuk Sandbox, tempel Server Key dari dashboard.sandbox.midtrans.com (awalan SB-Mid-server-).";
+  return null;
+}
+
+function invalidClientKey(clientKey: string): string | null {
+  const looksClient =
+    clientKey.startsWith("Mid-client-") ||
+    clientKey.startsWith("SB-Mid-client-");
+  if (!looksClient) {
+    return "Client Key tidak valid. Harus diawali Mid-client- atau SB-Mid-client-";
   }
   return null;
 }
@@ -118,42 +122,24 @@ export async function updateMidtransSettingsAction(
         return {
           ok: false,
           error:
-            "Key lama tidak bisa dibaca. Tempel ulang Server Key Sandbox (SB-Mid-server-…).",
+            "Key lama tidak bisa dibaca. Tempel ulang Server Key dari dashboard Midtrans yang sesuai mode.",
         };
       }
     }
 
     if (midtransEnabled && effectiveServerKey) {
-      const modeErr = keyModeError(effectiveServerKey, midtransIsProduction);
-      if (modeErr) {
-        return { ok: false, error: modeErr };
-      }
+      const formatErr = invalidServerKey(effectiveServerKey);
+      if (formatErr) return { ok: false, error: formatErr };
     }
 
     if (serverKeyRaw) {
-      const modeErr = keyModeError(serverKeyRaw, midtransIsProduction);
-      if (modeErr) return { ok: false, error: modeErr };
+      const formatErr = invalidServerKey(serverKeyRaw);
+      if (formatErr) return { ok: false, error: formatErr };
     }
 
     if (clientKeyRaw) {
-      const looksClient =
-        clientKeyRaw.startsWith("Mid-client-") ||
-        clientKeyRaw.startsWith("SB-Mid-client-");
-      if (!looksClient) {
-        return {
-          ok: false,
-          error:
-            "Client Key tidak valid. Harus diawali Mid-client- atau SB-Mid-client-",
-        };
-      }
-      const clientIsSandbox = clientKeyRaw.startsWith("SB-");
-      if (clientIsSandbox === midtransIsProduction) {
-        return {
-          ok: false,
-          error:
-            "Client Key harus dari environment yang sama (Sandbox pakai SB-…, Production tanpa SB-).",
-        };
-      }
+      const formatErr = invalidClientKey(clientKeyRaw);
+      if (formatErr) return { ok: false, error: formatErr };
     }
 
     const data: {
