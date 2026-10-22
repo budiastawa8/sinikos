@@ -1,13 +1,13 @@
 # SiniKos
 
-SaaS multi-tenant untuk manajemen kos (pemilik/pengelola): properti, kamar, penyewa, kontrak, tagihan, notifikasi WhatsApp (**Fonnte**), dan pembayaran online (**Midtrans per organisasi**).
+SaaS multi-tenant untuk manajemen kos (pemilik/pengelola): properti, kamar, penyewa, kontrak, tagihan, notifikasi WhatsApp (Fonnte / Meta Cloud API / gateway sendiri), dan pembayaran online (**Midtrans per organisasi**).
 
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind + shadcn/ui
 - PostgreSQL (Neon) + Prisma
 - Auth.js (credentials)
-- Vercel Cron + Fonnte WhatsApp API
+- Vercel Cron + WhatsApp (`WHATSAPP_PROVIDER`: fonnte | meta | custom)
 - Midtrans Snap **model B**: tiap Organization memakai akun Midtrans sendiri (uang sewa ke pemilik kos)
 
 ## Setup lokal
@@ -18,7 +18,7 @@ SaaS multi-tenant untuk manajemen kos (pemilik/pengelola): properti, kamar, peny
 cp .env.example .env
 ```
 
-2. Isi `DATABASE_URL` (Neon), `AUTH_SECRET`, dan opsional `FONNTE_TOKEN` / `CRON_SECRET`. Untuk menerima pembayaran langganan, isi `PLATFORM_MIDTRANS_SERVER_KEY` (Sandbox: `SB-Mid-server-...`) dan biarkan `PLATFORM_MIDTRANS_IS_PRODUCTION=false` sampai uji Production.
+2. Isi `DATABASE_URL` (Neon), `AUTH_SECRET`, dan opsional WhatsApp (`WHATSAPP_PROVIDER` + kredensial provider) / `CRON_SECRET`. Default WhatsApp: Fonnte (`FONNTE_TOKEN`). Untuk menerima pembayaran langganan, isi `PLATFORM_MIDTRANS_SERVER_KEY` (Sandbox: `SB-Mid-server-...`) dan biarkan `PLATFORM_MIDTRANS_IS_PRODUCTION=false` sampai uji Production.
 
 3. Install & migrasi:
 
@@ -35,7 +35,7 @@ Buka [http://localhost:3000](http://localhost:3000).
 ## Deploy Vercel
 
 1. Push repo, import ke Vercel.
-2. Set env: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `FONNTE_TOKEN`, `CRON_SECRET`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+2. Set env: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `WHATSAPP_PROVIDER` (+ `FONNTE_TOKEN` atau kredensial Meta/custom), `CRON_SECRET`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
 3. Build memakai `prisma generate` (sudah di script `build`).
 4. Jalankan migrasi: `npx prisma migrate deploy`.
 5. Cron: `vercel.json` → `/api/cron/billing` (Authorization Bearer `CRON_SECRET`).
@@ -72,7 +72,8 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 
 - **Vercel → Deployments:** pastikan build hijau setelah push.
 - **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
-- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `FONNTE_TOKEN`, `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- WhatsApp provider: `fonnte` (default), `meta` (Cloud API + opsional template), `custom` (`WHATSAPP_GATEWAY_URL` POST `{phone,message}`).
 - Langganan platform: biarkan Sandbox sampai siap; Production = uang sungguhan + Notification URL `/api/payments/midtrans/subscription`.
 - Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support = arahkan ke **Panduan** in-app.
 

@@ -266,6 +266,11 @@ export default async function GuidePage() {
             Jika kuota habis, tagihan dan catat bayar manual tetap jalan; WA
             otomatis ditahan sampai bulan berikutnya.
           </li>
+          <li>
+            Pengiriman memakai gateway platform SiniKos (bukan akun WhatsApp
+            pribadi Anda). Operator bisa memakai Fonnte, Meta Cloud API, atau
+            gateway HTTP sendiri lewat env server.
+          </li>
         </ul>
       </GuideSection>
 

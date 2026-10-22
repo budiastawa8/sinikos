@@ -1,9 +1,6 @@
 import { normalizeEnvLike } from "@/lib/crypto/secrets";
 import { normalizePhone } from "@/lib/utils";
-
-type FonnteResult =
-  | { ok: true; providerRef?: string }
-  | { ok: false; error: string };
+import type { WhatsAppSendResult } from "@/lib/whatsapp/types";
 
 function resolveFonnteToken() {
   const raw = process.env.FONNTE_TOKEN;
@@ -33,10 +30,11 @@ function mapFonnteError(reason?: string, detail?: string, status?: number) {
   return reason || detail || (status ? `HTTP ${status}` : "Gagal mengirim WhatsApp");
 }
 
-export async function sendWhatsAppMessage(
+/** Adapter Fonnte (default platform). */
+export async function sendViaFonnte(
   phone: string,
   message: string,
-): Promise<FonnteResult> {
+): Promise<WhatsAppSendResult> {
   const token = resolveFonnteToken();
   if (!token) {
     return { ok: false, error: "FONNTE_TOKEN belum dikonfigurasi" };

@@ -13,7 +13,7 @@ import {
   createSnapPayment,
   isOrgMidtransConfigured,
 } from "@/lib/payments/midtrans";
-import { sendWhatsAppMessage } from "@/lib/whatsapp/fonnte";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 export function buildInvoiceMessage(params: {
   tenantName: string;

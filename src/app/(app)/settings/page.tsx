@@ -163,10 +163,11 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>WhatsApp (Fonnte)</CardTitle>
+          <CardTitle>WhatsApp</CardTitle>
           <CardDescription>
-            Pengiriman memakai layanan platform SiniKos. Aktifkan centang di
-            atas (paket Pro) dan pastikan nomor penyewa valid.{" "}
+            Pengiriman memakai gateway platform SiniKos (Fonnte / Meta / custom).
+            Aktifkan centang di atas (paket Pro) dan pastikan nomor penyewa
+            valid.{" "}
             <Link
               href="/panduan#whatsapp"
               className="font-medium text-primary underline"
