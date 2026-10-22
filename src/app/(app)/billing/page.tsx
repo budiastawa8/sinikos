@@ -93,8 +93,11 @@ export default async function BillingPage({
         </h1>
         <p className="text-sm text-muted-foreground sm:text-base">
           Paket Gratis untuk kos kecil. Pro membuka batas kamar, link bayar
-          sewa, dan WhatsApp. Uang langganan masuk ke Midtrans platform
-          SiniKos, terpisah dari uang sewa penyewa.
+          sewa (opsional), dan WhatsApp. Uang langganan masuk ke Midtrans
+          platform SiniKos, terpisah dari uang sewa penyewa.{" "}
+          <Link href="/panduan#langganan" className="font-medium text-primary underline">
+            Baca panduan paket.
+          </Link>
         </p>
       </div>
 

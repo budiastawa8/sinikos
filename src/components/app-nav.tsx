@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
   Building2,
   CreditCard,
   DoorOpen,
@@ -23,6 +24,7 @@ export const APP_NAV_LINKS = [
   { href: "/leases", label: "Kontrak", icon: DoorOpen },
   { href: "/invoices", label: "Tagihan", icon: FileText },
   { href: "/billing", label: "Langganan", icon: CreditCard },
+  { href: "/panduan", label: "Panduan", icon: BookOpen },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ] as const;
 

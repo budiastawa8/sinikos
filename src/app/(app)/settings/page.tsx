@@ -41,8 +41,12 @@ export default async function SettingsPage() {
           Pengaturan
         </h1>
         <p className="text-sm text-muted-foreground sm:text-base">
-          Bisnis, jadwal tagihan, WhatsApp, dan Midtrans milik organisasi Anda.
+          Bisnis, jadwal tagihan, WhatsApp, dan Midtrans opsional untuk uang
+          sewa.
         </p>
+        <Button asChild variant="outline" className="mt-3 h-11 w-full sm:w-auto">
+          <Link href="/panduan">Buka panduan pemilik</Link>
+        </Button>
       </div>
 
       <Card>
@@ -127,11 +131,18 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Integrasi Fonnte</CardTitle>
+          <CardTitle>WhatsApp (Fonnte)</CardTitle>
           <CardDescription>
-            Token Fonnte dikonfigurasi lewat environment variable{" "}
-            <code className="rounded bg-muted px-1">FONNTE_TOKEN</code> di
-            Vercel / lokal (saat ini tingkat platform).
+            Pengiriman WhatsApp memakai layanan platform SiniKos. Anda cukup
+            mengaktifkan centang di atas (paket Pro) dan memastikan nomor
+            penyewa valid. Detail ada di{" "}
+            <Link
+              href="/panduan#whatsapp"
+              className="font-medium text-primary underline"
+            >
+              panduan WhatsApp
+            </Link>
+            .
           </CardDescription>
         </CardHeader>
       </Card>
@@ -139,11 +150,17 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
           <div className="space-y-1.5">
-            <CardTitle>Pembayaran online (Midtrans)</CardTitle>
+            <CardTitle>Pembayaran online (Midtrans) — opsional</CardTitle>
             <CardDescription>
-              Model B: tiap pemilik kos memakai akun Midtrans sendiri. Uang sewa
-              masuk ke Midtrans Anda, bukan ke platform SiniKos. Link bayar sewa
-              aktif di paket Pro.
+              Tidak wajib. Tanpa Midtrans Anda tetap bisa menagih dan mencatat
+              bayar manual. Jika diaktifkan, uang sewa masuk ke akun Midtrans
+              Anda (bukan SiniKos). Perlu paket Pro.{" "}
+              <Link
+                href="/panduan#midtrans"
+                className="font-medium text-primary underline"
+              >
+                Panduan setup.
+              </Link>
               {!pro && (
                 <>
                   {" "}

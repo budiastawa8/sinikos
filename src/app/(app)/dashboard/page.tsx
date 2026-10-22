@@ -71,9 +71,14 @@ export default async function DashboardPage() {
             Ringkasan {organization.name}
           </p>
         </div>
-        <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
-          <Link href="/billing">{pro ? "Paket Pro" : "Upgrade ke Pro"}</Link>
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+            <Link href="/panduan">Panduan</Link>
+          </Button>
+          <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+            <Link href="/billing">{pro ? "Paket Pro" : "Upgrade ke Pro"}</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

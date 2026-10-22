@@ -61,10 +61,20 @@ Di Sandbox, selesaikan pembayaran di simulator Midtrans lalu buka menu Langganan
 ## Alur bisnis singkat
 
 1. Daftar → onboarding organisasi + properti
-2. Pengaturan Midtrans (akun pemilik) + aktifkan payment channels
-3. Tambah kamar & penyewa → check-in
-4. Generate tagihan → buat link bayar / kirim WA
-5. Penyewa bayar → webhook melunasi; atau catat bayar manual
+2. Tambah kamar & penyewa → check-in
+3. Generate tagihan → catat bayar manual (cukup untuk banyak kos)
+4. Opsional (Pro): Midtrans milik pemilik untuk link bayar sewa + WhatsApp
+5. Jika Midtrans aktif: penyewa bayar → webhook melunasi
+
+Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa **opsional**.
+
+## Operasional & monitoring (operator platform)
+
+- **Vercel → Deployments:** pastikan build hijau setelah push.
+- **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
+- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `FONNTE_TOKEN`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Langganan: uji Sandbox dulu; Production hanya jika siap uang sungguhan.
+- Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support Anda = arahkan ke panduan in-app, bukan setup akun mereka.
 
 ## Catatan PWA
 

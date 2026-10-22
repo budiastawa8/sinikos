@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { updateMidtransSettingsAction } from "@/lib/actions/settings";
@@ -40,23 +41,33 @@ export function MidtransSettingsForm({
         });
       }}
     >
-      <div className="flex items-center gap-2">
+      <p className="text-sm text-muted-foreground">
+        Opsional. Tanpa Midtrans, tagihan dan catat bayar manual tetap bisa
+        dipakai.{" "}
+        <Link
+          href="/panduan#midtrans"
+          className="font-medium text-primary underline"
+        >
+          Lihat panduan langkah demi langkah.
+        </Link>
+      </p>
+      <div className="flex min-h-10 items-center gap-3">
         <input
           id="midtransEnabled"
           name="midtransEnabled"
           type="checkbox"
           defaultChecked={enabled}
-          className="size-4 rounded border"
+          className="size-5 rounded border"
         />
         <Label htmlFor="midtransEnabled">Aktifkan link bayar Midtrans</Label>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex min-h-10 items-center gap-3">
         <input
           id="midtransIsProduction"
           name="midtransIsProduction"
           type="checkbox"
           defaultChecked={isProduction}
-          className="size-4 rounded border"
+          className="size-5 rounded border"
         />
         <Label htmlFor="midtransIsProduction">
           Mode Production (matikan untuk Sandbox)
@@ -111,19 +122,19 @@ export function MidtransSettingsForm({
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex min-h-10 items-center gap-3">
         <input
           id="clearMidtransKeys"
           name="clearMidtransKeys"
           type="checkbox"
-          className="size-4 rounded border"
+          className="size-5 rounded border"
         />
         <Label htmlFor="clearMidtransKeys">
           Hapus key tersimpan & nonaktifkan Midtrans
         </Label>
       </div>
 
-      <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+      <Button type="submit" disabled={pending} className="h-11 w-full sm:w-auto">
         {pending ? "Menyimpan..." : "Simpan Midtrans"}
       </Button>
     </form>

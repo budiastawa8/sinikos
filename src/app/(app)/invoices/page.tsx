@@ -61,15 +61,25 @@ export default async function InvoicesPage() {
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             {pro
-              ? "Generate tagihan, bayar online (Midtrans), atau catat manual dan kirim WhatsApp."
+              ? "Generate tagihan, catat bayar manual, kirim WhatsApp, atau (opsional) buat link Midtrans."
               : "Generate tagihan atau catat bayar manual. Link bayar dan WhatsApp ada di paket Pro."}{" "}
             {!pro && (
               <Link href="/billing" className="font-medium text-primary underline">
-                Lihat langganan
+                Lihat langganan.
               </Link>
             )}
             {pro && !midtransReady && (
-              <> Midtrans belum diatur — isi di Pengaturan.</>
+              <>
+                {" "}
+                Midtrans belum diaktifkan — tidak wajib; isi di Pengaturan atau{" "}
+                <Link
+                  href="/panduan#midtrans"
+                  className="font-medium text-primary underline"
+                >
+                  baca panduan
+                </Link>
+                .
+              </>
             )}
           </p>
         </div>
