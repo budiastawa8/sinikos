@@ -52,7 +52,7 @@ Buka [http://localhost:3000](http://localhost:3000).
 | Kontrak aktif | 5 | Tanpa batas |
 | Catat bayar manual | Ya | Ya |
 | Link bayar sewa (Midtrans pemilik) | Tidak | Ya |
-| WhatsApp otomatis | Tidak | Ya |
+| WhatsApp otomatis | Tidak | Ya (kuota ~200 pesan/bulan, bisa diubah lewat `PLATFORM_WA_MONTHLY_QUOTA`) |
 
 Uang langganan masuk ke Midtrans platform (`PLATFORM_MIDTRANS_SERVER_KEY`), terpisah dari uang sewa (key per organisasi). Organisasi yang sudah ada saat migrasi ini dapat Pro selama 30 hari. Setelah masa berlaku lewat, cron harian menurunkan paket ke Gratis; data lama tetap ada, penambahan baru ikut batas Gratis.
 
@@ -72,7 +72,7 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 
 - **Vercel → Deployments:** pastikan build hijau setelah push.
 - **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
-- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `FONNTE_TOKEN`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `FONNTE_TOKEN`, `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
 - Langganan platform: biarkan Sandbox sampai siap; Production = uang sungguhan + Notification URL `/api/payments/midtrans/subscription`.
 - Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support = arahkan ke **Panduan** in-app.
 

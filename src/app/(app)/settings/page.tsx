@@ -1,5 +1,6 @@
 import { requireOrg } from "@/lib/tenant";
 import { isProActive } from "@/lib/billing/plans";
+import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
 import { updateSettingsAction } from "@/lib/actions/settings";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
 import { decryptSecret, maskSecret } from "@/lib/crypto/secrets";
@@ -28,8 +29,9 @@ function storedKeyHint(enc: string | null | undefined) {
 }
 
 export default async function SettingsPage() {
-  const { organization } = await requireOrg();
+  const { organization, organizationId } = await requireOrg();
   const pro = isProActive(organization);
+  const waQuota = pro ? await getWhatsAppQuotaUsage(organizationId) : null;
   const serverHint = storedKeyHint(organization.midtransServerKeyEnc);
   const clientHint = storedKeyHint(organization.midtransClientKeyEnc);
   const notifyUrl = notificationUrlHint();
@@ -133,18 +135,42 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>WhatsApp (Fonnte)</CardTitle>
           <CardDescription>
-            Pengiriman WhatsApp memakai layanan platform SiniKos. Anda cukup
-            mengaktifkan centang di atas (paket Pro) dan memastikan nomor
-            penyewa valid. Detail ada di{" "}
+            Pengiriman memakai layanan platform SiniKos. Aktifkan centang di
+            atas (paket Pro) dan pastikan nomor penyewa valid.{" "}
             <Link
               href="/panduan#whatsapp"
               className="font-medium text-primary underline"
             >
-              panduan WhatsApp
+              Panduan WhatsApp
             </Link>
             .
           </CardDescription>
         </CardHeader>
+        {waQuota && (
+          <CardContent className="space-y-2 text-sm">
+            <p>
+              Pemakaian {waQuota.periodLabel}:{" "}
+              <span className="font-medium">
+                {waQuota.used} / {waQuota.limit}
+              </span>{" "}
+              pesan terkirim (hanya yang sukses dihitung).
+            </p>
+            {waQuota.exhausted ? (
+              <p className="text-amber-800">
+                Kuota bulan ini habis. Pengiriman otomatis dan tombol Kirim WA
+                ditahan sampai bulan berikutnya.
+              </p>
+            ) : waQuota.nearLimit ? (
+              <p className="text-amber-800">
+                Mendekati batas kuota. Sisa {waQuota.remaining} pesan.
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                Sisa {waQuota.remaining} pesan bulan ini.
+              </p>
+            )}
+          </CardContent>
+        )}
       </Card>
 
       <Card>

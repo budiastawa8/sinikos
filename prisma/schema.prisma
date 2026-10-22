@@ -261,6 +261,7 @@ model WhatsAppMessageLog {
 
   @@index([organizationId])
   @@index([invoiceId])
+  @@index([organizationId, status, createdAt])
 }
 
 /// Pembayaran langganan SiniKos (akun Midtrans platform), terpisah dari sewa kos.

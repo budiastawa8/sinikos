@@ -6,6 +6,17 @@ export const PRO_PRICES = {
   YEARLY: 500_000,
 } as const;
 
+/** Kuota pesan WhatsApp terkirim per organisasi per bulan kalender (paket Pro). */
+export const DEFAULT_PRO_WA_MONTHLY_QUOTA = 200;
+
+export function proWhatsAppMonthlyQuota() {
+  const raw = process.env.PLATFORM_WA_MONTHLY_QUOTA?.trim();
+  if (!raw) return DEFAULT_PRO_WA_MONTHLY_QUOTA;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) return DEFAULT_PRO_WA_MONTHLY_QUOTA;
+  return Math.floor(n);
+}
+
 export const PLAN_FEATURES = {
   FREE: [
     "1 properti",
@@ -16,7 +27,7 @@ export const PLAN_FEATURES = {
   PRO: [
     "Properti, kamar, dan kontrak tanpa batas",
     "Link bayar Midtrans untuk uang sewa (akun Anda)",
-    "WhatsApp tagihan dan reminder",
+    `WhatsApp tagihan/reminder (kuota ${DEFAULT_PRO_WA_MONTHLY_QUOTA} pesan/bulan)`,
     "Semua yang ada di paket Gratis",
   ],
 } as const;

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
-import { isProActive } from "@/lib/billing/plans";
+import {
+  DEFAULT_PRO_WA_MONTHLY_QUOTA,
+  isProActive,
+} from "@/lib/billing/plans";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
 import { Button } from "@/components/ui/button";
 import {
@@ -222,8 +225,16 @@ export default async function GuidePage() {
             tagihan / hari reminder.
           </li>
           <li>
-            Pengiriman memakai layanan WhatsApp platform SiniKos (Fonnte). Anda
-            tidak perlu mengisi token sendiri.
+            Ada kuota sekitar{" "}
+            <span className="font-medium">
+              {DEFAULT_PRO_WA_MONTHLY_QUOTA} pesan terkirim per bulan
+            </span>{" "}
+            per bisnis (reset tiap awal bulan). Pemakaian terlihat di Dashboard
+            dan Pengaturan.
+          </li>
+          <li>
+            Jika kuota habis, tagihan dan catat bayar manual tetap jalan; WA
+            otomatis ditahan sampai bulan berikutnya.
           </li>
         </ul>
       </GuideSection>
@@ -241,7 +252,8 @@ export default async function GuidePage() {
           </li>
           <li>
             <span className="font-medium">WA gagal:</span> pastikan paket Pro,
-            WhatsApp aktif di Pengaturan, dan nomor penyewa valid (08… / 62…).
+            WhatsApp aktif di Pengaturan, nomor penyewa valid (08… / 62…), dan
+            kuota bulan ini belum habis.
           </li>
           <li>
             <span className="font-medium">Batas Gratis:</span> upgrade di Langganan

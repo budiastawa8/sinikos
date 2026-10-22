@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
+import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
 import {
   generateInvoicesNowAction,
   recordPaymentAction,
@@ -35,22 +36,29 @@ export default async function InvoicesPage() {
   const { organizationId, organization } = await requireOrg();
   const pro = isProActive(organization);
   const midtransReady = isOrgMidtransConfigured(organization);
-  const invoices = await db.invoice.findMany({
-    where: { organizationId },
-    orderBy: [{ periodYear: "desc" }, { periodMonth: "desc" }, { createdAt: "desc" }],
-    include: {
-      lease: {
-        include: {
-          tenant: true,
-          room: { include: { property: true } },
+  const [invoices, waQuota] = await Promise.all([
+    db.invoice.findMany({
+      where: { organizationId },
+      orderBy: [
+        { periodYear: "desc" },
+        { periodMonth: "desc" },
+        { createdAt: "desc" },
+      ],
+      include: {
+        lease: {
+          include: {
+            tenant: true,
+            room: { include: { property: true } },
+          },
+        },
+        whatsappLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
         },
       },
-      whatsappLogs: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
-  });
+    }),
+    pro ? getWhatsAppQuotaUsage(organizationId) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -102,6 +110,14 @@ export default async function InvoicesPage() {
           <GenerateInvoicesButton action={generateInvoicesNowAction} />
         </div>
       </div>
+
+      {waQuota?.exhausted && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Kuota WhatsApp {waQuota.periodLabel} habis ({waQuota.used}/
+          {waQuota.limit}). Tombol Kirim WA dan pengiriman otomatis ditahan;
+          catat bayar manual tetap bisa.
+        </div>
+      )}
 
       <Card>
         <CardHeader>

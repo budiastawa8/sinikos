@@ -2,6 +2,7 @@ import { InvoiceStatus, LeaseStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { expireLapsedPlans } from "@/lib/billing/entitlements";
 import { isProActive } from "@/lib/billing/plans";
+import { assertWhatsAppQuotaAvailable } from "@/lib/billing/whatsapp-quota";
 import { MONTHS_ID, formatRupiah, normalizePhone } from "@/lib/utils";
 import {
   createSnapPayment,
@@ -128,6 +129,11 @@ export async function sendInvoiceWhatsApp(invoiceId: string) {
       error:
         "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
     };
+  }
+
+  const quota = await assertWhatsAppQuotaAvailable(invoice.organizationId);
+  if (!quota.ok) {
+    return { ok: false as const, error: quota.error };
   }
 
   let paymentUrl = invoice.paymentUrl;
