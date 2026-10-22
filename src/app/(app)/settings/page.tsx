@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/tenant";
+import { isProActive } from "@/lib/billing/plans";
 import { updateSettingsAction } from "@/lib/actions/settings";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
 import { decryptSecret, maskSecret } from "@/lib/crypto/secrets";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -27,6 +29,7 @@ function storedKeyHint(enc: string | null | undefined) {
 
 export default async function SettingsPage() {
   const { organization } = await requireOrg();
+  const pro = isProActive(organization);
   const serverHint = storedKeyHint(organization.midtransServerKeyEnc);
   const clientHint = storedKeyHint(organization.midtransClientKeyEnc);
   const notifyUrl = notificationUrlHint();
@@ -89,16 +92,25 @@ export default async function SettingsPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-h-10 items-center gap-3">
               <input
                 id="whatsappEnabled"
                 name="whatsappEnabled"
                 type="checkbox"
-                defaultChecked={organization.whatsappEnabled}
-                className="size-4 rounded border"
+                defaultChecked={pro && organization.whatsappEnabled}
+                disabled={!pro}
+                className="size-5 rounded border"
               />
               <Label htmlFor="whatsappEnabled">Aktifkan WhatsApp otomatis</Label>
             </div>
+            {!pro && (
+              <p className="text-sm text-muted-foreground">
+                WhatsApp otomatis ada di paket Pro.{" "}
+                <Link href="/billing" className="font-medium text-primary underline">
+                  Lihat langganan.
+                </Link>
+              </p>
+            )}
             <div className="space-y-2">
               <Label htmlFor="whatsappPayInfo">Info pembayaran di pesan WA</Label>
               <Textarea
@@ -130,7 +142,19 @@ export default async function SettingsPage() {
             <CardTitle>Pembayaran online (Midtrans)</CardTitle>
             <CardDescription>
               Model B: tiap pemilik kos memakai akun Midtrans sendiri. Uang sewa
-              masuk ke Midtrans Anda, bukan ke platform SiniKos.
+              masuk ke Midtrans Anda, bukan ke platform SiniKos. Link bayar sewa
+              aktif di paket Pro.
+              {!pro && (
+                <>
+                  {" "}
+                  <Link
+                    href="/billing"
+                    className="font-medium text-primary underline"
+                  >
+                    Lihat langganan.
+                  </Link>
+                </>
+              )}
             </CardDescription>
           </div>
           {organization.midtransEnabled && serverHint ? (

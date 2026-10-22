@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { InvoiceStatus, type Organization } from "@prisma/client";
 import { db } from "@/lib/db";
+import { isProActive } from "@/lib/billing/plans";
 import { decryptSecret, normalizeEnvLike } from "@/lib/crypto/secrets";
 
 type OrgMidtrans = Pick<
@@ -24,24 +25,24 @@ function getOrgServerKey(org: OrgMidtrans) {
   }
 }
 
-function snapBaseUrl(isProduction: boolean) {
+export function snapBaseUrl(isProduction: boolean) {
   return isProduction
     ? "https://app.midtrans.com"
     : "https://app.sandbox.midtrans.com";
 }
 
-function apiBaseUrl(isProduction: boolean) {
+export function apiBaseUrl(isProduction: boolean) {
   return isProduction
     ? "https://api.midtrans.com"
     : "https://api.sandbox.midtrans.com";
 }
 
-function authHeader(serverKey: string) {
+export function authHeader(serverKey: string) {
   const token = Buffer.from(`${serverKey}:`).toString("base64");
   return `Basic ${token}`;
 }
 
-function isPaidTransactionStatus(
+export function isPaidTransactionStatus(
   status?: string,
   fraud?: string,
 ) {
@@ -107,7 +108,7 @@ async function markInvoicePaidFromMidtrans(params: {
   ]);
 }
 
-function appBaseUrl() {
+export function appBaseUrl() {
   return (
     process.env.AUTH_URL?.replace(/\/$/, "") ||
     process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
@@ -142,6 +143,14 @@ export async function createSnapPayment(
   if (!invoice) return { ok: false, error: "Tagihan tidak ditemukan" };
 
   const org = invoice.organization;
+  if (!isProActive(org)) {
+    return {
+      ok: false,
+      error:
+        "Link bayar sewa tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
+    };
+  }
+
   if (!isOrgMidtransConfigured(org)) {
     return {
       ok: false,

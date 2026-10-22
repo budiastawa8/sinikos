@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import { isProActive } from "@/lib/billing/plans";
 import {
   decryptSecret,
   encryptSecret,
@@ -14,7 +15,7 @@ export type SettingsActionResult =
   | { ok: false; error: string };
 
 export async function updateSettingsAction(formData: FormData) {
-  const { organizationId } = await requireOrg();
+  const { organizationId, organization } = await requireOrg();
   const name = String(formData.get("name") ?? "").trim();
   const billingDay = Number(formData.get("billingDay"));
   const reminderDaysBefore = Number(formData.get("reminderDaysBefore"));
@@ -39,7 +40,7 @@ export async function updateSettingsAction(formData: FormData) {
       name,
       billingDay,
       reminderDaysBefore,
-      whatsappEnabled,
+      whatsappEnabled: isProActive(organization) && whatsappEnabled,
       whatsappPayInfo:
         whatsappPayInfo ||
         "Silakan transfer ke rekening yang tertera / hubungi pengelola.",

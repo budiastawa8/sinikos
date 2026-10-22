@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleMidtransNotification } from "@/lib/payments/midtrans";
+import { handleSubscriptionNotification } from "@/lib/payments/platform-midtrans";
 
 export async function GET() {
   // Health check untuk memastikan route reachable
@@ -19,8 +20,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, ignored: true, reason: "empty_body" });
     }
 
-    const result = await handleMidtransNotification({
-      order_id: String(body.order_id ?? ""),
+    const orderId = String(body.order_id ?? "");
+    const payload = {
+      order_id: orderId,
       status_code: String(body.status_code ?? ""),
       gross_amount: String(body.gross_amount ?? ""),
       signature_key: String(body.signature_key ?? ""),
@@ -30,11 +32,14 @@ export async function POST(req: NextRequest) {
         ? String(body.transaction_id)
         : undefined,
       payment_type: body.payment_type ? String(body.payment_type) : undefined,
-    });
+    };
+    const result = orderId.startsWith("SUB-")
+      ? await handleSubscriptionNotification(payload)
+      : await handleMidtransNotification(payload);
 
     if (!result.ok) {
-      // Signature invalid untuk order yang dikenal → 403
-      return NextResponse.json({ error: result.error }, { status: 403 });
+      const status = result.error === "Signature tidak valid" ? 403 : 400;
+      return NextResponse.json({ error: result.error }, { status });
     }
 
     return NextResponse.json(result);

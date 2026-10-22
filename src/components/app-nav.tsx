@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Building2,
+  CreditCard,
   DoorOpen,
   FileText,
   LayoutDashboard,
@@ -21,16 +22,23 @@ export const APP_NAV_LINKS = [
   { href: "/tenants", label: "Penyewa", icon: Users },
   { href: "/leases", label: "Kontrak", icon: DoorOpen },
   { href: "/invoices", label: "Tagihan", icon: FileText },
+  { href: "/billing", label: "Langganan", icon: CreditCard },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ] as const;
 
 type AppNavProps = {
   orgName: string;
+  planLabel: string;
   onNavigate?: () => void;
   className?: string;
 };
 
-export function AppNav({ orgName, onNavigate, className }: AppNavProps) {
+export function AppNav({
+  orgName,
+  planLabel,
+  onNavigate,
+  className,
+}: AppNavProps) {
   const pathname = usePathname();
 
   return (
@@ -40,6 +48,13 @@ export function AppNav({ orgName, onNavigate, className }: AppNavProps) {
           SiniKos
         </p>
         <p className="mt-1 truncate text-sm font-semibold">{orgName}</p>
+        <Link
+          href="/billing"
+          onClick={onNavigate}
+          className="mt-2 inline-flex h-10 items-center rounded-md bg-primary/10 px-3 text-sm font-medium text-primary"
+        >
+          Paket {planLabel}
+        </Link>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
         {APP_NAV_LINKS.map((link) => {

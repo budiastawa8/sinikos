@@ -4,9 +4,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import {
+  assertCanAddProperty,
+  assertCanAddRoom,
+} from "@/lib/billing/entitlements";
 
 export async function createPropertyAction(formData: FormData) {
-  const { organizationId } = await requireOrg();
+  const { organizationId, organization } = await requireOrg();
+  await assertCanAddProperty(organization);
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim() || null;
   if (name.length < 2) throw new Error("Nama properti wajib diisi");
@@ -19,7 +24,8 @@ export async function createPropertyAction(formData: FormData) {
 }
 
 export async function createRoomAction(formData: FormData) {
-  const { organizationId } = await requireOrg();
+  const { organizationId, organization } = await requireOrg();
+  await assertCanAddRoom(organization);
   const propertyId = String(formData.get("propertyId") ?? "");
   const code = String(formData.get("code") ?? "").trim();
   const price = Number(formData.get("price"));

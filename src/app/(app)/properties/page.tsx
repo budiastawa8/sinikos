@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import { loadEntitlements } from "@/lib/billing/entitlements";
+import { canAdd } from "@/lib/billing/plans";
 import { createPropertyAction } from "@/lib/actions/properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PlanLimitNotice } from "@/components/plan-limit-notice";
 import {
   Card,
   CardContent,
@@ -14,7 +17,12 @@ import {
 } from "@/components/ui/card";
 
 export default async function PropertiesPage() {
-  const { organizationId } = await requireOrg();
+  const { organizationId, organization } = await requireOrg();
+  const entitlements = await loadEntitlements(organization);
+  const atPropertyLimit = !canAdd(
+    entitlements.usage.properties,
+    entitlements.limits.maxProperties,
+  );
   const properties = await db.property.findMany({
     where: { organizationId },
     include: { _count: { select: { rooms: true } } },
@@ -60,19 +68,34 @@ export default async function PropertiesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Tambah properti</CardTitle>
+            {!entitlements.active && entitlements.limits.maxProperties != null && (
+              <CardDescription>
+                Paket Gratis: {entitlements.usage.properties} dari{" "}
+                {entitlements.limits.maxProperties} properti
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
-            <form action={createPropertyAction} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama kos</Label>
-                <Input id="name" name="name" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Alamat</Label>
-                <Input id="address" name="address" />
-              </div>
-              <Button type="submit">Simpan</Button>
-            </form>
+            {atPropertyLimit ? (
+              <PlanLimitNotice>
+                Batas properti paket Gratis sudah tercapai. Data kos yang ada
+                tetap bisa dikelola.
+              </PlanLimitNotice>
+            ) : (
+              <form action={createPropertyAction} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nama kos</Label>
+                  <Input id="name" name="name" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Alamat</Label>
+                  <Input id="address" name="address" />
+                </div>
+                <Button type="submit" className="h-11 w-full sm:w-auto">
+                  Simpan
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>

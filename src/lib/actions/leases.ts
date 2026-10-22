@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import { assertCanAddLease } from "@/lib/billing/entitlements";
 
 export async function checkInAction(formData: FormData) {
-  const { organizationId } = await requireOrg();
+  const { organizationId, organization } = await requireOrg();
+  await assertCanAddLease(organization);
   const roomId = String(formData.get("roomId") ?? "");
   const tenantId = String(formData.get("tenantId") ?? "");
   const startDate = String(formData.get("startDate") ?? "");

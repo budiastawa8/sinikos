@@ -8,6 +8,7 @@ import {
   generateInvoicesForOrg,
   sendInvoiceWhatsApp,
 } from "@/lib/billing/generate";
+import { isProActive } from "@/lib/billing/plans";
 import {
   createSnapPayment,
   syncInvoicePaymentStatus,
@@ -63,6 +64,11 @@ export async function recordPaymentAction(formData: FormData) {
 
 export async function resendWhatsAppAction(formData: FormData) {
   const { organizationId, organization } = await requireOrg();
+  if (!isProActive(organization)) {
+    throw new Error(
+      "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
+    );
+  }
   if (!organization.whatsappEnabled) {
     throw new Error("WhatsApp dinonaktifkan di pengaturan");
   }

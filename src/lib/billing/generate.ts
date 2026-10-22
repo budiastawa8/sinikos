@@ -1,5 +1,7 @@
 import { InvoiceStatus, LeaseStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { expireLapsedPlans } from "@/lib/billing/entitlements";
+import { isProActive } from "@/lib/billing/plans";
 import { MONTHS_ID, formatRupiah, normalizePhone } from "@/lib/utils";
 import {
   createSnapPayment,
@@ -120,6 +122,14 @@ export async function sendInvoiceWhatsApp(invoiceId: string) {
     return { ok: false as const, error: "Tagihan tidak ditemukan" };
   }
 
+  if (!isProActive(invoice.organization)) {
+    return {
+      ok: false as const,
+      error:
+        "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
+    };
+  }
+
   let paymentUrl = invoice.paymentUrl;
   if (
     isOrgMidtransConfigured(invoice.organization) &&
@@ -162,6 +172,7 @@ export async function sendInvoiceWhatsApp(invoiceId: string) {
 }
 
 export async function runDailyBillingJob(asOf = new Date()) {
+  const { expired: expiredPlans } = await expireLapsedPlans(asOf);
   const orgs = await db.organization.findMany();
   let invoicesCreated = 0;
   let messagesSent = 0;
@@ -176,7 +187,7 @@ export async function runDailyBillingJob(asOf = new Date()) {
       invoicesCreated += gen.created;
     }
 
-    if (!org.whatsappEnabled) continue;
+    if (!org.whatsappEnabled || !isProActive(org)) continue;
 
     const invoices = await db.invoice.findMany({
       where: {
@@ -222,5 +233,5 @@ export async function runDailyBillingJob(asOf = new Date()) {
     });
   }
 
-  return { invoicesCreated, messagesSent, messagesFailed };
+  return { invoicesCreated, messagesSent, messagesFailed, expiredPlans };
 }

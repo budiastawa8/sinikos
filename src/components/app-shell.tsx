@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import { AppNav } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,11 @@ import {
 
 export function AppShell({
   orgName,
+  planLabel,
   children,
 }: {
   orgName: string;
+  planLabel: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -25,7 +28,7 @@ export function AppShell({
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 border-r bg-card/80 backdrop-blur md:flex md:flex-col">
-        <AppNav orgName={orgName} />
+        <AppNav orgName={orgName} planLabel={planLabel} />
       </aside>
 
       {/* Mobile top bar + drawer */}
@@ -46,7 +49,11 @@ export function AppShell({
             <SheetHeader className="sr-only">
               <SheetTitle>Menu navigasi</SheetTitle>
             </SheetHeader>
-            <AppNav orgName={orgName} onNavigate={() => setOpen(false)} />
+            <AppNav
+              orgName={orgName}
+              planLabel={planLabel}
+              onNavigate={() => setOpen(false)}
+            />
           </SheetContent>
         </Sheet>
         <div className="min-w-0 flex-1">
@@ -55,6 +62,12 @@ export function AppShell({
           </p>
           <p className="truncate text-sm font-semibold">{orgName}</p>
         </div>
+        <Link
+          href="/billing"
+          className="inline-flex h-10 shrink-0 items-center rounded-md px-3 text-sm font-medium text-primary"
+        >
+          {planLabel}
+        </Link>
       </header>
 
       <main className="min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 md:p-8">

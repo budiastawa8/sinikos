@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import { isProActive } from "@/lib/billing/plans";
 import { formatRupiah, formatDate } from "@/lib/utils";
 import {
   Card,
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
   const { organizationId, organization } = await requireOrg();
+  const pro = isProActive(organization);
 
   const [rooms, occupied, unpaid, overdue, recentInvoices, failedWa] =
     await Promise.all([
@@ -60,13 +62,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Dashboard
-        </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
-          Ringkasan {organization.name}
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            Ringkasan {organization.name}
+          </p>
+        </div>
+        <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+          <Link href="/billing">{pro ? "Paket Pro" : "Upgrade ke Pro"}</Link>
+        </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -36,6 +36,23 @@ enum WhatsAppStatus {
   FAILED
 }
 
+enum PlanCode {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
+}
+
 model User {
   id           String       @id @default(cuid())
   name         String
@@ -94,6 +111,9 @@ model Organization {
   midtransIsProduction   Boolean      @default(false)
   midtransServerKeyEnc   String?
   midtransClientKeyEnc   String?
+  /// Paket SaaS. Pro berlaku selama planExpiresAt masih di depan.
+  plan                   PlanCode     @default(FREE)
+  planExpiresAt          DateTime?
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
   memberships            Membership[]
@@ -102,6 +122,9 @@ model Organization {
   leases                 Lease[]
   invoices               Invoice[]
   whatsappLogs           WhatsAppMessageLog[]
+  subscriptions          Subscription[]
+
+  @@index([plan, planExpiresAt])
 }
 
 model Membership {
@@ -238,4 +261,26 @@ model WhatsAppMessageLog {
 
   @@index([organizationId])
   @@index([invoiceId])
+}
+
+/// Pembayaran langganan SiniKos (akun Midtrans platform), terpisah dari sewa kos.
+model Subscription {
+  id              String             @id @default(cuid())
+  organizationId  String
+  plan            PlanCode           @default(PRO)
+  period          BillingPeriod
+  status          SubscriptionStatus @default(PENDING)
+  amount          Int
+  midtransOrderId String?            @unique
+  paymentUrl      String?
+  providerRef     String?
+  paidAt          DateTime?
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
 }

@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import { isProActive } from "@/lib/billing/plans";
 import {
   generateInvoicesNowAction,
   recordPaymentAction,
@@ -31,6 +33,7 @@ import { isOrgMidtransConfigured } from "@/lib/payments/midtrans";
 
 export default async function InvoicesPage() {
   const { organizationId, organization } = await requireOrg();
+  const pro = isProActive(organization);
   const midtransReady = isOrgMidtransConfigured(organization);
   const invoices = await db.invoice.findMany({
     where: { organizationId },
@@ -57,9 +60,15 @@ export default async function InvoicesPage() {
             Tagihan
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
-            Generate tagihan, bayar online (Midtrans), atau catat manual &amp;
-            kirim WhatsApp.
-            {!midtransReady && (
+            {pro
+              ? "Generate tagihan, bayar online (Midtrans), atau catat manual dan kirim WhatsApp."
+              : "Generate tagihan atau catat bayar manual. Link bayar dan WhatsApp ada di paket Pro."}{" "}
+            {!pro && (
+              <Link href="/billing" className="font-medium text-primary underline">
+                Lihat langganan
+              </Link>
+            )}
+            {pro && !midtransReady && (
               <> Midtrans belum diatur — isi di Pengaturan.</>
             )}
           </p>
@@ -139,17 +148,17 @@ export default async function InvoicesPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex min-w-[12rem] flex-col gap-2">
-                          {inv.status !== "PAID" && midtransReady && (
-                            <>
-                              <PayLinkButton
-                                invoiceId={inv.id}
-                                existingUrl={inv.paymentUrl}
-                              />
-                              {inv.midtransOrderId && (
-                                <SyncMidtransButton invoiceId={inv.id} />
-                              )}
-                            </>
+                          {inv.status !== "PAID" && pro && midtransReady && (
+                            <PayLinkButton
+                              invoiceId={inv.id}
+                              existingUrl={inv.paymentUrl}
+                            />
                           )}
+                          {inv.status !== "PAID" &&
+                            midtransReady &&
+                            inv.midtransOrderId && (
+                              <SyncMidtransButton invoiceId={inv.id} />
+                            )}
                           {inv.status !== "PAID" && (
                             <form
                               action={recordPaymentAction}
@@ -178,21 +187,23 @@ export default async function InvoicesPage() {
                               </Button>
                             </form>
                           )}
-                          <form action={resendWhatsAppAction}>
-                            <input
-                              type="hidden"
-                              name="invoiceId"
-                              value={inv.id}
-                            />
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant="outline"
-                              className="w-full sm:w-auto"
-                            >
-                              Kirim WA
-                            </Button>
-                          </form>
+                          {pro && (
+                            <form action={resendWhatsAppAction}>
+                              <input
+                                type="hidden"
+                                name="invoiceId"
+                                value={inv.id}
+                              />
+                              <Button
+                                type="submit"
+                                size="sm"
+                                variant="outline"
+                                className="h-10 w-full sm:w-auto"
+                              >
+                                Kirim WA
+                              </Button>
+                            </form>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
