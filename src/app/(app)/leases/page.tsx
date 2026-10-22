@@ -37,9 +37,19 @@ export default async function LeasesPage() {
     db.lease.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
-      include: {
-        tenant: true,
-        room: { include: { property: true } },
+      take: 80,
+      select: {
+        id: true,
+        monthlyRent: true,
+        startDate: true,
+        status: true,
+        tenant: { select: { name: true } },
+        room: {
+          select: {
+            code: true,
+            property: { select: { name: true } },
+          },
+        },
       },
     }),
     db.room.findMany({
@@ -47,12 +57,18 @@ export default async function LeasesPage() {
         property: { organizationId },
         status: { in: ["AVAILABLE", "MAINTENANCE"] },
       },
-      include: { property: true },
       orderBy: [{ property: { name: "asc" } }, { code: "asc" }],
+      select: {
+        id: true,
+        code: true,
+        price: true,
+        property: { select: { name: true } },
+      },
     }),
     db.tenant.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 

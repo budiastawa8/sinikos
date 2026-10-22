@@ -28,11 +28,15 @@ export default async function TenantsPage() {
   const tenants = await db.tenant.findMany({
     where: { organizationId },
     orderBy: { createdAt: "desc" },
-    include: {
+    take: 100,
+    select: {
+      id: true,
+      name: true,
+      phone: true,
       leases: {
         where: { status: "ACTIVE" },
         take: 1,
-        include: { room: true },
+        select: { room: { select: { code: true } } },
       },
     },
   });

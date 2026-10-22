@@ -45,18 +45,24 @@ export default async function DashboardPage() {
         where: { organizationId },
         take: 8,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          amount: true,
+          dueDate: true,
+          status: true,
           lease: {
-            include: {
-              tenant: true,
-              room: true,
+            select: {
+              tenant: { select: { name: true } },
+              room: { select: { code: true } },
             },
           },
         },
       }),
-      db.whatsAppMessageLog.count({
-        where: { organizationId, status: "FAILED" },
-      }),
+      pro
+        ? Promise.resolve(0)
+        : db.whatsAppMessageLog.count({
+            where: { organizationId, status: "FAILED" },
+          }),
       pro
         ? getWhatsAppQuotaUsage(organizationId)
         : Promise.resolve(null),

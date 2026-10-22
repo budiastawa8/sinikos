@@ -1,16 +1,19 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-export async function requireSession() {
+/** Deduped per request — layout + page boleh memanggil tanpa 2× round-trip auth/DB. */
+export const requireSession = cache(async () => {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
   return session;
-}
+});
 
-export async function requireOrg() {
+/** Deduped per request — hindari query membership/org ganda di layout dan page. */
+export const requireOrg = cache(async () => {
   const session = await requireSession();
 
   let membership = session.user.organizationId
@@ -43,4 +46,4 @@ export async function requireOrg() {
     organization: membership.organization,
     role: membership.role,
   };
-}
+});

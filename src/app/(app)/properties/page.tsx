@@ -18,16 +18,23 @@ import {
 
 export default async function PropertiesPage() {
   const { organizationId, organization } = await requireOrg();
-  const entitlements = await loadEntitlements(organization);
+  const [entitlements, properties] = await Promise.all([
+    loadEntitlements(organization),
+    db.property.findMany({
+      where: { organizationId },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        _count: { select: { rooms: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
   const atPropertyLimit = !canAdd(
     entitlements.usage.properties,
     entitlements.limits.maxProperties,
   );
-  const properties = await db.property.findMany({
-    where: { organizationId },
-    include: { _count: { select: { rooms: true } } },
-    orderBy: { createdAt: "asc" },
-  });
 
   return (
     <div className="space-y-8">

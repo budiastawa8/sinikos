@@ -44,16 +44,32 @@ export default async function InvoicesPage() {
         { periodMonth: "desc" },
         { createdAt: "desc" },
       ],
-      include: {
+      take: 60,
+      select: {
+        id: true,
+        periodYear: true,
+        periodMonth: true,
+        amount: true,
+        amountPaid: true,
+        dueDate: true,
+        status: true,
+        paymentUrl: true,
+        midtransOrderId: true,
         lease: {
-          include: {
-            tenant: true,
-            room: { include: { property: true } },
+          select: {
+            tenant: { select: { name: true } },
+            room: {
+              select: {
+                code: true,
+                property: { select: { name: true } },
+              },
+            },
           },
         },
         whatsappLogs: {
           orderBy: { createdAt: "desc" },
           take: 1,
+          select: { status: true },
         },
       },
     }),
@@ -122,7 +138,11 @@ export default async function InvoicesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Semua tagihan</CardTitle>
-          <CardDescription>{invoices.length} tagihan</CardDescription>
+          <CardDescription>
+            {invoices.length}
+            {invoices.length >= 60 ? "+" : ""} tagihan terbaru
+            {invoices.length >= 60 ? " (maks. 60 ditampilkan)" : ""}
+          </CardDescription>
         </CardHeader>
         <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
           <Table>
