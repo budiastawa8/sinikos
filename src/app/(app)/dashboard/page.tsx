@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { PwaInstallHint } from "@/components/pwa-install-hint";
 
 export default async function DashboardPage() {
   const { organizationId, organization } = await requireOrg();
@@ -90,6 +91,8 @@ export default async function DashboardPage() {
           </Button>
         </div>
       </div>
+
+      <PwaInstallHint />
 
       {waQuota?.exhausted && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">

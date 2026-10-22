@@ -20,6 +20,7 @@ const TOC = [
   { id: "sandbox", label: "Uji Sandbox" },
   { id: "production", label: "Pindah ke Production" },
   { id: "whatsapp", label: "WhatsApp tagihan" },
+  { id: "pwa", label: "Pasang di HP (PWA)" },
   { id: "masalah", label: "Kalau ada masalah" },
 ] as const;
 
@@ -239,7 +240,29 @@ export default async function GuidePage() {
         </ul>
       </GuideSection>
 
-      <GuideSection id="masalah" title="7. Kalau ada masalah">
+      <GuideSection id="pwa" title="7. Pasang di HP (PWA)">
+        <p className="text-sm text-muted-foreground">
+          SiniKos bisa dipasang ke layar utama seperti aplikasi, tanpa Play
+          Store. Butuh kunjungan lewat HTTPS (mis. sinikos.vercel.app).
+        </p>
+        <ul className="mt-3 list-disc space-y-2 pl-5">
+          <li>
+            <span className="font-medium">Android (Chrome):</span> di Dashboard
+            bisa muncul tombol Pasang, atau menu browser → “Install app” /
+            “Tambahkan ke layar utama”.
+          </li>
+          <li>
+            <span className="font-medium">iPhone (Safari):</span> Bagikan →
+            “Tambah ke Layar Utama”.
+          </li>
+          <li>
+            Setelah terpasang, ikon SiniKos membuka app dalam mode layar penuh
+            (standalone).
+          </li>
+        </ul>
+      </GuideSection>
+
+      <GuideSection id="masalah" title="8. Kalau ada masalah">
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">Link bayar gagal:</span> cek Server Key,

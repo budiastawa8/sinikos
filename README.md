@@ -85,6 +85,12 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 5. Channel Production aktif / disetujui Midtrans.
 6. Uji nominal kecil ke satu penyewa sebelum operasional penuh.
 
-## Catatan PWA
+## PWA
 
-Arsitektur siap ditambah PWA (manifest + service worker) di fase lanjut.
+SiniKos mendukung Progressive Web App:
+
+- Manifest: `src/app/manifest.ts` (ikon di `public/icons/`)
+- Service worker: `public/sw.js` (cache aset statis; HTML/API tetap network-first)
+- Banner pasang di Dashboard (Chrome/Android); petunjuk iOS di Safari
+
+Uji di production HTTPS: buka situs di HP → Install / Tambah ke Layar Utama.
