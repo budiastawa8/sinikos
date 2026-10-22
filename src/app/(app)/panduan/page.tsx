@@ -251,9 +251,10 @@ export default async function GuidePage() {
             catat bayar manual.
           </li>
           <li>
-            <span className="font-medium">WA gagal:</span> pastikan paket Pro,
-            WhatsApp aktif di Pengaturan, nomor penyewa valid (08… / 62…), dan
-            kuota bulan ini belum habis.
+            <span className="font-medium">WA gagal / token invalid:</span>{" "}
+            pastikan paket Pro, WhatsApp aktif, nomor valid, kuota belum habis,
+            dan pengelola platform memakai token Device Fonnte (bukan Account
+            Token), perangkat connect, lalu redeploy setelah mengubah env.
           </li>
           <li>
             <span className="font-medium">Batas Gratis:</span> upgrade di Langganan
