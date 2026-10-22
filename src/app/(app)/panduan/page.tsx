@@ -257,7 +257,8 @@ export default async function GuidePage() {
           </li>
           <li>
             Setelah terpasang, ikon SiniKos membuka app dalam mode layar penuh
-            (standalone).
+            (standalone). Di HP, menu utama ada di bilah bawah; Langganan /
+            Panduan / Pengaturan lewat ikon menu di kiri atas.
           </li>
         </ul>
       </GuideSection>

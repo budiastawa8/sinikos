@@ -12,25 +12,53 @@ import {
   LogOut,
   Settings,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/lib/actions/auth";
 
-export const APP_NAV_LINKS = [
+export type AppNavLink = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+/** Tab bawah mobile (urut sentuhan). */
+export const MOBILE_TAB_LINKS: AppNavLink[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/invoices", label: "Tagihan", icon: FileText },
+  { href: "/tenants", label: "Penyewa", icon: Users },
+  { href: "/leases", label: "Kontrak", icon: DoorOpen },
+  { href: "/properties", label: "Properti", icon: Building2 },
+];
+
+/** Item sekunder — drawer mobile + bagian bawah sidebar desktop. */
+export const APP_MORE_LINKS: AppNavLink[] = [
+  { href: "/billing", label: "Langganan", icon: CreditCard },
+  { href: "/panduan", label: "Panduan", icon: BookOpen },
+  { href: "/settings", label: "Pengaturan", icon: Settings },
+];
+
+/** Urutan sidebar desktop (alur kerja kos). */
+export const APP_NAV_LINKS: AppNavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/properties", label: "Properti", icon: Building2 },
   { href: "/tenants", label: "Penyewa", icon: Users },
   { href: "/leases", label: "Kontrak", icon: DoorOpen },
   { href: "/invoices", label: "Tagihan", icon: FileText },
-  { href: "/billing", label: "Langganan", icon: CreditCard },
-  { href: "/panduan", label: "Panduan", icon: BookOpen },
-  { href: "/settings", label: "Pengaturan", icon: Settings },
-] as const;
+  ...APP_MORE_LINKS,
+];
+
+export function navLinkActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 type AppNavProps = {
   orgName: string;
   planLabel: string;
+  /** `full` = semua link (desktop). `more` = Langganan/Panduan/Pengaturan (drawer mobile). */
+  mode?: "full" | "more";
   onNavigate?: () => void;
   className?: string;
 };
@@ -38,10 +66,12 @@ type AppNavProps = {
 export function AppNav({
   orgName,
   planLabel,
+  mode = "full",
   onNavigate,
   className,
 }: AppNavProps) {
   const pathname = usePathname();
+  const links = mode === "more" ? APP_MORE_LINKS : APP_NAV_LINKS;
 
   return (
     <div className={cn("flex h-full flex-col px-4 py-6", className)}>
@@ -57,12 +87,17 @@ export function AppNav({
         >
           Paket {planLabel}
         </Link>
+        {mode === "more" && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Menu utama ada di bilah bawah. Di sini: langganan, panduan, dan
+            pengaturan.
+          </p>
+        )}
       </div>
       <nav className="flex flex-1 flex-col gap-1">
-        {APP_NAV_LINKS.map((link) => {
+        {links.map((link) => {
           const Icon = link.icon;
-          const active =
-            pathname === link.href || pathname.startsWith(`${link.href}/`);
+          const active = navLinkActive(pathname, link.href);
           return (
             <Link
               key={link.href}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
+import { AppBottomNav } from "@/components/app-bottom-nav";
 import { AppNav } from "@/components/app-nav";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,10 +29,10 @@ export function AppShell({
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 border-r bg-card/80 backdrop-blur md:flex md:flex-col">
-        <AppNav orgName={orgName} planLabel={planLabel} />
+        <AppNav orgName={orgName} planLabel={planLabel} mode="full" />
       </aside>
 
-      {/* Mobile top bar + drawer */}
+      {/* Mobile top bar + drawer (menu sekunder) */}
       <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-card/95 px-3 backdrop-blur md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -40,18 +41,19 @@ export function AppShell({
               variant="outline"
               size="icon"
               className="shrink-0"
-              aria-label="Buka menu"
+              aria-label="Menu lainnya"
             >
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0">
             <SheetHeader className="sr-only">
-              <SheetTitle>Menu navigasi</SheetTitle>
+              <SheetTitle>Menu lainnya</SheetTitle>
             </SheetHeader>
             <AppNav
               orgName={orgName}
               planLabel={planLabel}
+              mode="more"
               onNavigate={() => setOpen(false)}
             />
           </SheetContent>
@@ -70,9 +72,11 @@ export function AppShell({
         </Link>
       </header>
 
-      <main className="min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 md:p-8">
+      <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-24 sm:px-6 md:p-8 md:pb-8">
         {children}
       </main>
+
+      <AppBottomNav />
     </div>
   );
 }
