@@ -62,7 +62,7 @@ export default async function SettingsPage() {
           <CardTitle>Organisasi & billing</CardTitle>
           <CardDescription>
             Kedua siklus memakai bayar di muka. Tagihan pertama wajib lunas
-            sebelum kamar OCCUPIED. Cron membuat tagihan berikutnya di tanggal
+            sebelum kamar terisi. Cron membuat tagihan berikutnya di tanggal
             jatuh tempo.
           </CardDescription>
         </CardHeader>

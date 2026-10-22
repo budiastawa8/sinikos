@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
 
 export function AddStaffForm({ disabled }: { disabled?: boolean }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
 
   return (
@@ -15,15 +17,24 @@ export function AddStaffForm({ disabled }: { disabled?: boolean }) {
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
-        const fd = new FormData(e.currentTarget);
+        const form = e.currentTarget;
+        const fd = new FormData(form);
         start(async () => {
-          const result = await addStaffAction(fd);
-          if (!result.ok) {
-            toast.error(result.error);
-            return;
+          try {
+            const result = await addStaffAction(fd);
+            if (!result.ok) {
+              toast.error(result.error);
+              return;
+            }
+            form.reset();
+            toast.success(
+              "Staf ditambahkan. Mereka bisa login dengan email itu.",
+            );
+            router.refresh();
+          } catch (err) {
+            console.error(err);
+            toast.error("Gagal menambah staf. Muat ulang halaman lalu coba lagi.");
           }
-          toast.success("Staf ditambahkan. Mereka bisa login dengan email itu.");
-          e.currentTarget.reset();
         });
       }}
     >
@@ -78,6 +89,7 @@ export function AddStaffForm({ disabled }: { disabled?: boolean }) {
 }
 
 export function RemoveStaffButton({ membershipId }: { membershipId: string }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
 
   return (
@@ -89,12 +101,18 @@ export function RemoveStaffButton({ membershipId }: { membershipId: string }) {
       onClick={() =>
         start(async () => {
           if (!confirm("Hapus akses staf ini dari organisasi?")) return;
-          const result = await removeStaffAction(membershipId);
-          if (!result.ok) {
-            toast.error(result.error);
-            return;
+          try {
+            const result = await removeStaffAction(membershipId);
+            if (!result.ok) {
+              toast.error(result.error);
+              return;
+            }
+            toast.success("Akses staf dihapus.");
+            router.refresh();
+          } catch (err) {
+            console.error(err);
+            toast.error("Gagal menghapus staf. Muat ulang halaman lalu coba lagi.");
           }
-          toast.success("Akses staf dihapus.");
         })
       }
     >

@@ -7,6 +7,10 @@ import {
   createRoomAction,
   updateRoomStatusAction,
 } from "@/lib/actions/properties";
+import {
+  roomStatusBadgeVariant,
+  roomStatusLabel,
+} from "@/lib/labels";
 import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,32 +84,27 @@ export default async function PropertyDetailPage({
                     <TableCell className="font-medium">{room.code}</TableCell>
                     <TableCell>{formatRupiah(room.price)}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          room.status === "AVAILABLE"
-                            ? "success"
-                            : room.status === "OCCUPIED"
-                              ? "warning"
-                              : "secondary"
-                        }
-                      >
-                        {room.status}
+                      <Badge variant={roomStatusBadgeVariant(room.status)}>
+                        {roomStatusLabel(room.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <form action={updateRoomStatusAction} className="flex gap-2">
+                      <form
+                        action={updateRoomStatusAction}
+                        className="flex flex-col gap-2 sm:flex-row"
+                      >
                         <input type="hidden" name="roomId" value={room.id} />
                         <select
                           name="status"
                           defaultValue={room.status}
-                          className="h-9 rounded-md border px-2 text-sm"
+                          className="h-10 min-w-0 flex-1 rounded-md border px-2 text-sm sm:h-9"
                         >
-                          <option value="AVAILABLE">AVAILABLE</option>
-                          <option value="OCCUPIED">OCCUPIED</option>
-                          <option value="MAINTENANCE">MAINTENANCE</option>
+                          <option value="AVAILABLE">Kosong</option>
+                          <option value="OCCUPIED">Terisi</option>
+                          <option value="MAINTENANCE">Perawatan</option>
                         </select>
-                        <Button type="submit" size="sm" variant="outline">
-                          Update
+                        <Button type="submit" size="sm" variant="outline" className="h-10 sm:h-9">
+                          Simpan
                         </Button>
                       </form>
                     </TableCell>

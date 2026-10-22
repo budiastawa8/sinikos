@@ -7,6 +7,12 @@ import {
   generateInvoicesNowAction,
   recordPaymentAction,
 } from "@/lib/actions/invoices";
+import {
+  invoiceStatusBadgeVariant,
+  invoiceStatusLabel,
+  whatsappStatusBadgeVariant,
+  whatsappStatusLabel,
+} from "@/lib/labels";
 import { formatRupiah, formatDate, MONTHS_ID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +91,7 @@ export default async function InvoicesPage() {
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             Melunasi tagihan check-in pertama akan mengaktifkan kontrak dan
-            menandai kamar OCCUPIED.{" "}
+            menandai kamar terisi.{" "}
             {pro
               ? "Generate tagihan, catat bayar manual, kirim WhatsApp, atau (opsional) buat link Midtrans."
               : "Generate tagihan atau catat bayar manual. Link bayar dan WhatsApp ada di paket Pro."}{" "}
@@ -184,26 +190,16 @@ export default async function InvoicesPage() {
                       <TableCell>{formatRupiah(inv.amountPaid)}</TableCell>
                       <TableCell>{formatDate(inv.dueDate)}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            inv.status === "PAID"
-                              ? "success"
-                              : inv.status === "OVERDUE"
-                                ? "destructive"
-                                : "warning"
-                          }
-                        >
-                          {inv.status}
+                        <Badge variant={invoiceStatusBadgeVariant(inv.status)}>
+                          {invoiceStatusLabel(inv.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {lastWa ? (
                           <Badge
-                            variant={
-                              lastWa.status === "SENT" ? "success" : "destructive"
-                            }
+                            variant={whatsappStatusBadgeVariant(lastWa.status)}
                           >
-                            {lastWa.status}
+                            {whatsappStatusLabel(lastWa.status)}
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>

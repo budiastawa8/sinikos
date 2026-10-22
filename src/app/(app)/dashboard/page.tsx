@@ -3,6 +3,10 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
 import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
+import {
+  invoiceStatusBadgeVariant,
+  invoiceStatusLabel,
+} from "@/lib/labels";
 import { formatRupiah, formatDate } from "@/lib/utils";
 import {
   Card,
@@ -183,15 +187,9 @@ function StatCard({ title, value }: { title: string; value: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<
-    string,
-    "default" | "success" | "warning" | "destructive" | "secondary" | "outline"
-  > = {
-    PAID: "success",
-    UNPAID: "warning",
-    PARTIAL: "secondary",
-    OVERDUE: "destructive",
-    DRAFT: "outline",
-  };
-  return <Badge variant={map[status] ?? "secondary"}>{status}</Badge>;
+  return (
+    <Badge variant={invoiceStatusBadgeVariant(status)}>
+      {invoiceStatusLabel(status)}
+    </Badge>
+  );
 }

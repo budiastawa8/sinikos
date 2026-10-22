@@ -91,7 +91,7 @@ export default async function GuidePage() {
               Tagihan
             </Link>
             , catat bayar manual (atau link Midtrans). Setelah lunas, kamar
-            menjadi OCCUPIED dan kontrak aktif.
+            menjadi terisi dan kontrak aktif.
           </li>
         </ol>
         <p className="mt-3 text-sm text-muted-foreground">

@@ -5,6 +5,11 @@ import {
   getArrearsReport,
   getOccupancyReport,
 } from "@/lib/reports/summary";
+import {
+  invoiceStatusLabel,
+  leaseStatusLabel,
+  roomStatusLabel,
+} from "@/lib/labels";
 import { formatDate, formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,16 +29,13 @@ import {
 } from "@/components/ui/table";
 import { ExportCsvButton } from "@/components/export-csv-button";
 
-const STATUS_LABEL: Record<string, string> = {
-  UNPAID: "Belum lunas",
-  PARTIAL: "Sebagian",
-  OVERDUE: "Terlambat",
-  AVAILABLE: "Kosong",
-  OCCUPIED: "Terisi",
-  MAINTENANCE: "Perawatan",
-  PENDING: "Menunggu bayar",
-  ACTIVE: "Aktif",
-};
+function statusLabel(code: string) {
+  const invoice = invoiceStatusLabel(code);
+  if (invoice !== code) return invoice;
+  const room = roomStatusLabel(code);
+  if (room !== code) return room;
+  return leaseStatusLabel(code);
+}
 
 export default async function ReportsPage() {
   const { organization } = await requireOrg();
@@ -111,7 +113,7 @@ export default async function ReportsPage() {
               r.amountPaid,
               r.outstanding,
               formatDate(r.dueDate),
-              STATUS_LABEL[r.status] ?? r.status,
+              statusLabel(r.status),
             ])}
           />
         </CardHeader>
@@ -150,7 +152,7 @@ export default async function ReportsPage() {
                           r.status === "OVERDUE" ? "warning" : "secondary"
                         }
                       >
-                        {STATUS_LABEL[r.status] ?? r.status}
+                        {statusLabel(r.status)}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -182,12 +184,10 @@ export default async function ReportsPage() {
             rows={occupancy.rows.map((r) => [
               r.propertyName,
               r.roomCode,
-              STATUS_LABEL[r.status] ?? r.status,
+              statusLabel(r.status),
               r.price,
               r.tenantName,
-              r.leaseStatus
-                ? (STATUS_LABEL[r.leaseStatus] ?? r.leaseStatus)
-                : "",
+              r.leaseStatus ? statusLabel(r.leaseStatus) : "",
             ])}
           />
         </CardHeader>
@@ -216,7 +216,7 @@ export default async function ReportsPage() {
                     <TableCell className="font-medium">{r.roomCode}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {STATUS_LABEL[r.status] ?? r.status}
+                        {statusLabel(r.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatRupiah(r.price)}</TableCell>

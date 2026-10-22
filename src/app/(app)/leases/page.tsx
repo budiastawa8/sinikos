@@ -7,6 +7,7 @@ import {
   checkInAction,
   checkOutAction,
 } from "@/lib/actions/leases";
+import { leaseStatusLabel } from "@/lib/labels";
 import { formatRupiah, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,13 +35,6 @@ function leaseStatusBadge(status: string) {
   if (status === "ACTIVE") return "success" as const;
   if (status === "PENDING") return "warning" as const;
   return "secondary" as const;
-}
-
-function leaseStatusLabel(status: string) {
-  if (status === "PENDING") return "Menunggu bayar";
-  if (status === "ACTIVE") return "Aktif";
-  if (status === "ENDED") return "Selesai";
-  return status;
 }
 
 export default async function LeasesPage() {

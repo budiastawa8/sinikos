@@ -14,6 +14,7 @@ import {
   getPlatformMidtransStatus,
   subscriptionNotifyUrl,
 } from "@/lib/payments/platform-midtrans";
+import { SUBSCRIPTION_STATUS_LABEL } from "@/lib/labels";
 import { formatDate, formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,12 +36,7 @@ import {
 import { SubscribeButton } from "@/components/subscribe-button";
 import { SyncSubscriptionButton } from "@/components/sync-subscription-button";
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Menunggu",
-  ACTIVE: "Lunas",
-  EXPIRED: "Berakhir",
-  CANCELED: "Batal",
-};
+const STATUS_LABEL = SUBSCRIPTION_STATUS_LABEL;
 
 const PERIOD_LABEL: Record<string, string> = {
   MONTHLY: "1 bulan",

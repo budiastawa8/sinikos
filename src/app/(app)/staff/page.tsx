@@ -32,7 +32,7 @@ export default async function StaffPage() {
     include: {
       user: { select: { id: true, name: true, email: true } },
     },
-    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+    orderBy: { createdAt: "asc" },
   });
 
   const isOwner = role === "OWNER";
@@ -100,7 +100,7 @@ export default async function StaffPage() {
                   <TableCell>{m.user.email}</TableCell>
                   <TableCell>
                     <Badge variant={m.role === "OWNER" ? "success" : "secondary"}>
-                      {m.role === "OWNER" ? "Owner" : "Staf"}
+                      {m.role === "OWNER" ? "Pemilik" : "Staf"}
                     </Badge>
                   </TableCell>
                   <TableCell>{formatDate(m.createdAt)}</TableCell>
