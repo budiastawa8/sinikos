@@ -1,0 +1,39 @@
+---
+description: Navigasi dan halaman app SiniKos harus terasa responsif (kurangi jeda klik menu)
+alwaysApply: true
+---
+
+# Performa navigasi app (SiniKos)
+
+App Router + Neon + auth membuat **setiap klik menu = round-trip server**. Jangan menambah jeda tanpa alasan; berikan feedback visual saat menunggu.
+
+## Konteks
+
+- `(app)/layout` memakai `force-dynamic` dan `requireOrg()` (auth + DB) — wajar untuk data privat.
+- Tanpa `loading.tsx`, pengguna merasa “macet” meski request masih jalan.
+- Latensi Neon (remote) dan panggilan Midtrans eksternal memperbesar jeda.
+
+## Wajib saat menambah/mengubah halaman di `(app)`
+
+- Sediakan `loading.tsx` (skeleton/placeholder) di segmen route yang relevan, minimal di `src/app/(app)/loading.tsx`, agar klik menu langsung ada feedback.
+- Jangan panggil API eksternal (Midtrans, Fonnte, dll.) di **render page** hanya untuk “jaga-jaga”; sync opsional lewat tombol aksi, webhook, atau background — bukan blocking navigasi.
+- Hindari query DB berantai yang bisa digabung (`Promise.all`) atau diganti satu query yang cukup.
+- Jangan panggil `requireOrg()` / query org yang sama berulang tanpa perlu di dalam satu request jika data sudah ada dari layout (prefer props / satu sumber).
+- `revalidatePath` hanya untuk path yang benar-benar berubah; jangan melebarkan invalidasi tanpa alasan.
+
+## Dilarang
+
+- Menambah pekerjaan berat (loop N+1, sync payment provider, generate massal) di path navigasi sidebar tanpa loading state.
+- Mengasumsikan navigasi client-side instan; rancang UI untuk menunggu server.
+
+## Preferensi optimasi (urut)
+
+1. Loading UI / skeleton
+2. Kurangi kerja blocking di page load
+3. Parallelize / kurangi query
+4. Cache atau longgarkan `force-dynamic` hanya jika aman untuk auth/tenant
+
+## Saat selesai
+
+- Uji mental: klik menu → dalam ~100ms harus ada indikasi loading atau konten, bukan layar diam.
+---
