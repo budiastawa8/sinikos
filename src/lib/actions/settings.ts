@@ -9,6 +9,7 @@ import {
   encryptSecret,
   normalizeEnvLike,
 } from "@/lib/crypto/secrets";
+import { validateMidtransKeyMode } from "@/lib/payments/midtrans-keys";
 
 export type SettingsActionResult =
   | { ok: true }
@@ -51,27 +52,6 @@ export async function updateSettingsAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-/** Format key saja — Sandbox/Production dipilih lewat checkbox, bukan prefix SB-. */
-function invalidServerKey(serverKey: string): string | null {
-  const looksServer =
-    serverKey.startsWith("Mid-server-") ||
-    serverKey.startsWith("SB-Mid-server-");
-  if (!looksServer) {
-    return "Server Key tidak valid. Harus diawali Mid-server- atau SB-Mid-server-";
-  }
-  return null;
-}
-
-function invalidClientKey(clientKey: string): string | null {
-  const looksClient =
-    clientKey.startsWith("Mid-client-") ||
-    clientKey.startsWith("SB-Mid-client-");
-  if (!looksClient) {
-    return "Client Key tidak valid. Harus diawali Mid-client- atau SB-Mid-client-";
-  }
-  return null;
-}
-
 export async function updateMidtransSettingsAction(
   formData: FormData,
 ): Promise<SettingsActionResult> {
@@ -81,6 +61,8 @@ export async function updateMidtransSettingsAction(
     const midtransEnabled = formData.get("midtransEnabled") === "on";
     const midtransIsProduction =
       formData.get("midtransIsProduction") === "on";
+    const acknowledgeProduction =
+      formData.get("acknowledgeProduction") === "on";
     const serverKeyRaw = normalizeEnvLike(
       String(formData.get("midtransServerKey") ?? ""),
     );
@@ -112,7 +94,19 @@ export async function updateMidtransSettingsAction(
       };
     }
 
-    // Resolve the server key that will be active after save
+    if (
+      midtransIsProduction &&
+      midtransEnabled &&
+      !organization.midtransIsProduction &&
+      !acknowledgeProduction
+    ) {
+      return {
+        ok: false,
+        error:
+          "Centang konfirmasi Production: Anda paham ini memakai uang sungguhan dan sudah uji Sandbox.",
+      };
+    }
+
     let effectiveServerKey = serverKeyRaw;
     if (!effectiveServerKey && organization.midtransServerKeyEnc) {
       try {
@@ -128,19 +122,36 @@ export async function updateMidtransSettingsAction(
       }
     }
 
-    if (midtransEnabled && effectiveServerKey) {
-      const formatErr = invalidServerKey(effectiveServerKey);
-      if (formatErr) return { ok: false, error: formatErr };
+    let effectiveClientKey = clientKeyRaw;
+    if (!effectiveClientKey && organization.midtransClientKeyEnc) {
+      try {
+        effectiveClientKey = normalizeEnvLike(
+          decryptSecret(organization.midtransClientKeyEnc),
+        );
+      } catch {
+        effectiveClientKey = "";
+      }
     }
 
-    if (serverKeyRaw) {
-      const formatErr = invalidServerKey(serverKeyRaw);
-      if (formatErr) return { ok: false, error: formatErr };
-    }
+    const modeErr = validateMidtransKeyMode({
+      isProduction: midtransIsProduction,
+      serverKey: effectiveServerKey || serverKeyRaw || null,
+      clientKey: effectiveClientKey || clientKeyRaw || null,
+    });
+    if (modeErr) return { ok: false, error: modeErr };
 
-    if (clientKeyRaw) {
-      const formatErr = invalidClientKey(clientKeyRaw);
-      if (formatErr) return { ok: false, error: formatErr };
+    if (
+      midtransIsProduction &&
+      midtransEnabled &&
+      !serverKeyRaw &&
+      organization.midtransServerKeyEnc &&
+      !organization.midtransIsProduction
+    ) {
+      return {
+        ok: false,
+        error:
+          "Saat pindah ke Production, tempel ulang Server Key dari dashboard Production (jangan pakai key Sandbox tersimpan).",
+      };
     }
 
     const data: {

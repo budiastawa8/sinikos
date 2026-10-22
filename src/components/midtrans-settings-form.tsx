@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateMidtransSettingsAction } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export function MidtransSettingsForm({
   notifyUrl,
 }: Props) {
   const [pending, start] = useTransition();
+  const [productionOn, setProductionOn] = useState(isProduction);
 
   return (
     <form
@@ -37,7 +38,11 @@ export function MidtransSettingsForm({
             toast.error(result.error);
             return;
           }
-          toast.success("Pengaturan Midtrans disimpan");
+          toast.success(
+            productionOn
+              ? "Midtrans Production disimpan — transaksi memakai uang sungguhan"
+              : "Pengaturan Midtrans disimpan",
+          );
         });
       }}
     >
@@ -51,6 +56,30 @@ export function MidtransSettingsForm({
           Lihat panduan langkah demi langkah.
         </Link>
       </p>
+
+      <div className="rounded-lg border bg-muted/40 px-3 py-3 text-sm">
+        <p className="font-medium text-foreground">Checklist sebelum Production</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+          <li>Sandbox sudah berhasil sampai tagihan berstatus PAID.</li>
+          <li>
+            Key diambil dari{" "}
+            <span className="font-medium text-foreground">dashboard.midtrans.com</span>{" "}
+            (Production), bukan sandbox.
+          </li>
+          <li>Notification URL di dashboard Production sama dengan di bawah.</li>
+          <li>Channel (mis. VA BCA) sudah disetujui / aktif di Production.</li>
+          <li>Uji dulu dengan nominal kecil ke satu penyewa.</li>
+        </ol>
+        <p className="mt-2">
+          <Link
+            href="/panduan#production"
+            className="font-medium text-primary underline"
+          >
+            Panduan pindah ke Production
+          </Link>
+        </p>
+      </div>
+
       <div className="flex min-h-10 items-center gap-3">
         <input
           id="midtransEnabled"
@@ -61,12 +90,14 @@ export function MidtransSettingsForm({
         />
         <Label htmlFor="midtransEnabled">Aktifkan link bayar Midtrans</Label>
       </div>
+
       <div className="flex min-h-10 items-center gap-3">
         <input
           id="midtransIsProduction"
           name="midtransIsProduction"
           type="checkbox"
-          defaultChecked={isProduction}
+          checked={productionOn}
+          onChange={(e) => setProductionOn(e.target.checked)}
           className="size-5 rounded border"
         />
         <Label htmlFor="midtransIsProduction">
@@ -74,14 +105,41 @@ export function MidtransSettingsForm({
         </Label>
       </div>
 
-      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-        Mode ditentukan checkbox di atas, bukan awalan key. Untuk Sandbox:
-        matikan Production, salin Server/Client Key dari{" "}
-        <span className="font-medium">dashboard.sandbox.midtrans.com</span>, lalu
-        simpan. Key Sandbox dan Production bisa tampak mirip (
-        <code className="rounded bg-white/80 px-1">Mid-server-…</code>
-        ).
-      </p>
+      {productionOn ? (
+        <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+          <p className="font-medium">Mode Production — uang sungguhan</p>
+          <p>
+            Penyewa yang membayar lewat link akan ditagih nyata. Pastikan Sandbox
+            sudah lulus, Notification URL Production benar, dan Anda menempel{" "}
+            <span className="font-medium">Server Key Production</span> (bukan
+            key berawalan <code className="rounded bg-white/80 px-1">SB-</code>
+            ).
+          </p>
+          {!isProduction && (
+            <div className="flex min-h-10 items-start gap-3">
+              <input
+                id="acknowledgeProduction"
+                name="acknowledgeProduction"
+                type="checkbox"
+                className="mt-1 size-5 shrink-0 rounded border"
+                required
+              />
+              <Label htmlFor="acknowledgeProduction" className="leading-snug">
+                Saya sudah uji Sandbox sampai lunas, paham ini uang sungguhan,
+                dan akan menempel key Production.
+              </Label>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+          Mode Sandbox: tidak memotong uang sungguhan. Ambil key dari{" "}
+          <span className="font-medium">dashboard.sandbox.midtrans.com</span>.
+          Key bisa berawalan{" "}
+          <code className="rounded bg-white/80 px-1">SB-Mid-server-…</code> atau{" "}
+          <code className="rounded bg-white/80 px-1">Mid-server-…</code>.
+        </p>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="midtransServerKey">Server Key</Label>
@@ -93,9 +151,17 @@ export function MidtransSettingsForm({
           placeholder={
             serverHint
               ? `Tersimpan: ${serverHint} — isi ulang jika ganti akun/mode`
-              : "Mid-server-…"
+              : productionOn
+                ? "Mid-server-… (Production)"
+                : "SB-Mid-server-… atau Mid-server-…"
           }
         />
+        {productionOn && !isProduction && (
+          <p className="text-xs text-muted-foreground">
+            Wajib tempel ulang key Production saat pertama kali mengaktifkan mode
+            ini.
+          </p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="midtransClientKey">Client Key (opsional)</Label>
@@ -107,18 +173,25 @@ export function MidtransSettingsForm({
           placeholder={
             clientHint
               ? `Tersimpan: ${clientHint} — isi untuk diganti`
-              : "Mid-client-…"
+              : productionOn
+                ? "Mid-client-… (Production)"
+                : "Mid-client-…"
           }
         />
       </div>
 
       <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">Notification URL</p>
-        <p className="mt-1 break-all font-mono text-xs">{notifyUrl}</p>
+        <p className="mt-1 break-all font-mono text-xs text-foreground">
+          {notifyUrl}
+        </p>
         <p className="mt-2">
-          Di dashboard Midtrans yang sama dengan mode (Sandbox/Production):
-          tempel sebagai Payment Notification URL, lalu aktifkan payment
-          channels.
+          Tempel di dashboard Midtrans{" "}
+          <span className="font-medium text-foreground">
+            {productionOn ? "Production" : "Sandbox"}
+          </span>{" "}
+          → Settings → Payment Notification URL, lalu aktifkan channel yang
+          dipakai.
         </p>
       </div>
 

@@ -81,6 +81,21 @@ export default async function InvoicesPage() {
                 .
               </>
             )}
+            {pro && midtransReady && organization.midtransIsProduction && (
+              <>
+                {" "}
+                Mode Midtrans:{" "}
+                <span className="font-medium text-amber-800">Production</span>{" "}
+                (uang sungguhan).{" "}
+                <Link
+                  href="/panduan#production"
+                  className="font-medium text-primary underline"
+                >
+                  Panduan Production
+                </Link>
+                .
+              </>
+            )}
           </p>
         </div>
         <div className="w-full sm:w-auto">

@@ -11,7 +11,6 @@ import {
 import {
   getPlatformMidtransStatus,
   subscriptionNotifyUrl,
-  syncPendingSubscriptions,
 } from "@/lib/payments/platform-midtrans";
 import { formatDate, formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +57,6 @@ export default async function BillingPage({
 }) {
   const { batas } = await searchParams;
   const { organizationId } = await requireOrg();
-  await syncPendingSubscriptions(organizationId);
 
   const fresh = await db.organization.findUniqueOrThrow({
     where: { id: organizationId },
@@ -234,7 +232,8 @@ export default async function BillingPage({
         <CardHeader>
           <CardTitle>Riwayat pembayaran</CardTitle>
           <CardDescription>
-            Langganan yang menunggu bisa dicek manual jika webhook belum masuk.
+            Jika status masih menunggu setelah bayar, tekan Cek status bayar
+            (webhook kadang terlambat).
           </CardDescription>
         </CardHeader>
         <CardContent className="-mx-2 overflow-x-auto sm:mx-0">

@@ -3,6 +3,7 @@ import { InvoiceStatus, type Organization } from "@prisma/client";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
 import { decryptSecret, normalizeEnvLike } from "@/lib/crypto/secrets";
+import { validateMidtransKeyMode } from "@/lib/payments/midtrans-keys";
 
 type OrgMidtrans = Pick<
   Organization,
@@ -166,6 +167,14 @@ export async function createSnapPayment(
       error:
         "Gagal membaca Server Key Midtrans. Simpan ulang key di Pengaturan.",
     };
+  }
+
+  const modeErr = validateMidtransKeyMode({
+    isProduction: org.midtransIsProduction,
+    serverKey,
+  });
+  if (modeErr) {
+    return { ok: false, error: modeErr };
   }
 
   if (invoice.status === InvoiceStatus.PAID) {

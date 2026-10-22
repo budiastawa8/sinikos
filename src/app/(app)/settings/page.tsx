@@ -175,7 +175,9 @@ export default async function SettingsPage() {
             </CardDescription>
           </div>
           {organization.midtransEnabled && serverHint ? (
-            <Badge variant="success">Aktif</Badge>
+            <Badge variant={organization.midtransIsProduction ? "warning" : "success"}>
+              {organization.midtransIsProduction ? "Production" : "Sandbox"}
+            </Badge>
           ) : (
             <Badge variant="secondary">Nonaktif</Badge>
           )}

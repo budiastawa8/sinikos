@@ -73,8 +73,17 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 - **Vercel → Deployments:** pastikan build hijau setelah push.
 - **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
 - Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `FONNTE_TOKEN`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
-- Langganan: uji Sandbox dulu; Production hanya jika siap uang sungguhan.
-- Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support Anda = arahkan ke panduan in-app, bukan setup akun mereka.
+- Langganan platform: biarkan Sandbox sampai siap; Production = uang sungguhan + Notification URL `/api/payments/midtrans/subscription`.
+- Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support = arahkan ke **Panduan** in-app.
+
+### Checklist Midtrans Production (uang sewa, per pemilik)
+
+1. Sandbox org sudah PAID (link bayar + webhook / cek status).
+2. Key dari `dashboard.midtrans.com` (bukan sandbox); tolak key `SB-`.
+3. Di SiniKos: Mode Production + konfirmasi + tempel ulang Server Key.
+4. Notification URL Production = `https://<domain>/api/payments/midtrans/notification`.
+5. Channel Production aktif / disetujui Midtrans.
+6. Uji nominal kecil ke satu penyewa sebelum operasional penuh.
 
 ## Catatan PWA
 

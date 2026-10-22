@@ -170,19 +170,44 @@ export default async function GuidePage() {
 
       <GuideSection id="production" title="5. Pindah ke Production">
         <p className="text-sm text-muted-foreground">
-          Hanya setelah Sandbox sukses. Production memakai uang sungguhan.
+          Hanya setelah Sandbox sukses sampai tagihan{" "}
+          <span className="font-medium text-foreground">PAID</span>. Production
+          memakai uang sungguhan — kerjakan hati-hati dan opsional (manual tetap
+          bisa).
         </p>
         <ol className="mt-3 list-decimal space-y-2 pl-5">
-          <li>Ambil Server Key dari dashboard Midtrans Production (bukan sandbox).</li>
           <li>
-            Di SiniKos: centang Mode Production, tempel key Production, simpan.
+            Login{" "}
+            <span className="font-medium">dashboard.midtrans.com</span>{" "}
+            (Production), bukan dashboard.sandbox.
           </li>
           <li>
-            Di dashboard Midtrans Production, set Notification URL yang sama
-            seperti di atas, dan aktifkan channel yang sudah disetujui Midtrans.
+            Salin Server Key Production. Jangan pakai key berawalan{" "}
+            <code className="rounded bg-muted px-1">SB-</code>.
           </li>
-          <li>Uji dengan nominal kecil sebelum dipakai ke semua penyewa.</li>
+          <li>
+            Di SiniKos → Pengaturan: centang Mode Production, centang konfirmasi
+            uang sungguhan, <span className="font-medium">tempel ulang</span>{" "}
+            Server Key Production, simpan.
+          </li>
+          <li>
+            Di dashboard Midtrans Production, set Payment Notification URL ke:
+            <span className="mt-2 block break-all rounded-md bg-muted px-3 py-2 font-mono text-xs text-foreground">
+              {notifyUrl}
+            </span>
+          </li>
+          <li>
+            Aktifkan channel yang sudah disetujui Midtrans (mis. VA BCA
+            Production). Channel Sandbox tidak otomatis aktif di Production.
+          </li>
+          <li>
+            Buat tagihan uji dengan nominal kecil untuk satu penyewa → bayar →
+            pastikan status lunas. Baru pakai untuk operasional harian.
+          </li>
         </ol>
+        <p className="mt-3 text-sm text-amber-900">
+          Jika ragu, biarkan Mode Production mati dan lanjut catat bayar manual.
+        </p>
       </GuideSection>
 
       <GuideSection id="whatsapp" title="6. WhatsApp tagihan">
