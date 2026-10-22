@@ -6,7 +6,6 @@ import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
 import {
   generateInvoicesNowAction,
   recordPaymentAction,
-  resendWhatsAppAction,
 } from "@/lib/actions/invoices";
 import { formatRupiah, formatDate, MONTHS_ID } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +29,7 @@ import {
 import { GenerateInvoicesButton } from "@/components/generate-invoices-button";
 import { PayLinkButton } from "@/components/pay-link-button";
 import { SyncMidtransButton } from "@/components/sync-midtrans-button";
+import { SendWhatsAppButton } from "@/components/send-whatsapp-button";
 import { isOrgMidtransConfigured } from "@/lib/payments/midtrans";
 
 export default async function InvoicesPage() {
@@ -229,21 +229,10 @@ export default async function InvoicesPage() {
                             </form>
                           )}
                           {pro && (
-                            <form action={resendWhatsAppAction}>
-                              <input
-                                type="hidden"
-                                name="invoiceId"
-                                value={inv.id}
-                              />
-                              <Button
-                                type="submit"
-                                size="sm"
-                                variant="outline"
-                                className="h-10 w-full sm:w-auto"
-                              >
-                                Kirim WA
-                              </Button>
-                            </form>
+                            <SendWhatsAppButton
+                              invoiceId={inv.id}
+                              disabled={Boolean(waQuota?.exhausted)}
+                            />
                           )}
                         </div>
                       </TableCell>

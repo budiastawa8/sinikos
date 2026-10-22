@@ -62,26 +62,47 @@ export async function recordPaymentAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function resendWhatsAppAction(formData: FormData) {
-  const { organizationId, organization } = await requireOrg();
-  if (!isProActive(organization)) {
-    throw new Error(
-      "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
-    );
-  }
-  if (!organization.whatsappEnabled) {
-    throw new Error("WhatsApp dinonaktifkan di pengaturan");
-  }
+export async function resendWhatsAppAction(
+  formData: FormData,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  try {
+    const { organizationId, organization } = await requireOrg();
+    if (!isProActive(organization)) {
+      return {
+        ok: false,
+        error:
+          "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
+      };
+    }
+    if (!organization.whatsappEnabled) {
+      return {
+        ok: false,
+        error: "WhatsApp dinonaktifkan di pengaturan",
+      };
+    }
 
-  const invoiceId = String(formData.get("invoiceId") ?? "");
-  const invoice = await db.invoice.findFirst({
-    where: { id: invoiceId, organizationId },
-  });
-  if (!invoice) throw new Error("Tagihan tidak ditemukan");
+    const invoiceId = String(formData.get("invoiceId") ?? "");
+    const invoice = await db.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
+    });
+    if (!invoice) {
+      return { ok: false, error: "Tagihan tidak ditemukan" };
+    }
 
-  const result = await sendInvoiceWhatsApp(invoiceId);
-  revalidatePath("/invoices");
-  if (!result.ok) throw new Error(result.error);
+    const result = await sendInvoiceWhatsApp(invoiceId);
+    revalidatePath("/invoices");
+    revalidatePath("/dashboard");
+    revalidatePath("/settings");
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+    return { ok: true, message: "WhatsApp terkirim" };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Gagal mengirim WhatsApp",
+    };
+  }
 }
 
 /** Buat / perbarui link bayar Midtrans (Snap) untuk penyewa */
