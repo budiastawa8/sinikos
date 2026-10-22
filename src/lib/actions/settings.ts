@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { BillingCycle } from "@prisma/client";
-import { requireOrg } from "@/lib/tenant";
+import { requireOrg, requireOwner } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
 import {
@@ -69,7 +69,7 @@ export async function updateMidtransSettingsAction(
   formData: FormData,
 ): Promise<SettingsActionResult> {
   try {
-    const { organizationId, organization } = await requireOrg();
+    const { organizationId, organization } = await requireOwner();
 
     const midtransEnabled = formData.get("midtransEnabled") === "on";
     const midtransIsProduction =

@@ -29,7 +29,8 @@ function storedKeyHint(enc: string | null | undefined) {
 }
 
 export default async function SettingsPage() {
-  const { organization, organizationId } = await requireOrg();
+  const { organization, organizationId, role } = await requireOrg();
+  const isOwner = role === "OWNER";
   const pro = isProActive(organization);
   const waQuota = pro ? await getWhatsAppQuotaUsage(organizationId) : null;
   const serverHint = storedKeyHint(organization.midtransServerKeyEnc);
@@ -46,9 +47,14 @@ export default async function SettingsPage() {
           Bisnis, jadwal tagihan, WhatsApp, dan Midtrans opsional untuk uang
           sewa.
         </p>
-        <Button asChild variant="outline" className="mt-3 h-11 w-full sm:w-auto">
-          <Link href="/panduan">Buka panduan pemilik</Link>
-        </Button>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+            <Link href="/panduan">Buka panduan pemilik</Link>
+          </Button>
+          <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+            <Link href="/staff">Tim & staf</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -141,7 +147,7 @@ export default async function SettingsPage() {
             </div>
             {!pro && (
               <p className="text-sm text-muted-foreground">
-                WhatsApp otomatis ada di paket Pro.{" "}
+                WhatsApp otomatis ada di paket Pro / Pro+.{" "}
                 <Link href="/billing" className="font-medium text-primary underline">
                   Lihat langganan.
                 </Link>
@@ -166,8 +172,8 @@ export default async function SettingsPage() {
           <CardTitle>WhatsApp</CardTitle>
           <CardDescription>
             Pengiriman memakai gateway platform SiniKos (Fonnte / Meta / custom).
-            Aktifkan centang di atas (paket Pro) dan pastikan nomor penyewa
-            valid.{" "}
+            Aktifkan centang di atas (paket Pro / Pro+) dan pastikan nomor
+            penyewa valid.{" "}
             <Link
               href="/panduan#whatsapp"
               className="font-medium text-primary underline"
@@ -189,7 +195,11 @@ export default async function SettingsPage() {
             {waQuota.exhausted ? (
               <p className="text-amber-800">
                 Kuota bulan ini habis. Pengiriman otomatis dan tombol Kirim WA
-                ditahan sampai bulan berikutnya.
+                ditahan sampai bulan berikutnya
+                {organization.plan !== "PRO_PLUS"
+                  ? ", atau upgrade ke Pro+ untuk kuota lebih besar"
+                  : ""}
+                .
               </p>
             ) : waQuota.nearLimit ? (
               <p className="text-amber-800">
@@ -204,51 +214,67 @@ export default async function SettingsPage() {
         )}
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
-          <div className="space-y-1.5">
-            <CardTitle>Pembayaran online (Midtrans) — opsional</CardTitle>
-            <CardDescription>
-              Tidak wajib. Tanpa Midtrans Anda tetap bisa menagih dan mencatat
-              bayar manual. Jika diaktifkan, uang sewa masuk ke akun Midtrans
-              Anda (bukan SiniKos). Perlu paket Pro.{" "}
-              <Link
-                href="/panduan#midtrans"
-                className="font-medium text-primary underline"
+      {isOwner ? (
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
+            <div className="space-y-1.5">
+              <CardTitle>Pembayaran online (Midtrans) — opsional</CardTitle>
+              <CardDescription>
+                Tidak wajib. Tanpa Midtrans Anda tetap bisa menagih dan mencatat
+                bayar manual. Jika diaktifkan, uang sewa masuk ke akun Midtrans
+                Anda (bukan SiniKos). Perlu paket Pro / Pro+.{" "}
+                <Link
+                  href="/panduan#midtrans"
+                  className="font-medium text-primary underline"
+                >
+                  Panduan setup.
+                </Link>
+                {!pro && (
+                  <>
+                    {" "}
+                    <Link
+                      href="/billing"
+                      className="font-medium text-primary underline"
+                    >
+                      Lihat langganan.
+                    </Link>
+                  </>
+                )}
+              </CardDescription>
+            </div>
+            {organization.midtransEnabled && serverHint ? (
+              <Badge
+                variant={
+                  organization.midtransIsProduction ? "warning" : "success"
+                }
               >
-                Panduan setup.
-              </Link>
-              {!pro && (
-                <>
-                  {" "}
-                  <Link
-                    href="/billing"
-                    className="font-medium text-primary underline"
-                  >
-                    Lihat langganan.
-                  </Link>
-                </>
-              )}
+                {organization.midtransIsProduction ? "Production" : "Sandbox"}
+              </Badge>
+            ) : (
+              <Badge variant="secondary">Nonaktif</Badge>
+            )}
+          </CardHeader>
+          <CardContent>
+            <MidtransSettingsForm
+              enabled={organization.midtransEnabled}
+              isProduction={organization.midtransIsProduction}
+              serverHint={serverHint}
+              clientHint={clientHint}
+              notifyUrl={notifyUrl}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pembayaran online (Midtrans)</CardTitle>
+            <CardDescription>
+              Hanya owner yang dapat mengubah kunci Midtrans. Status saat ini:{" "}
+              {organization.midtransEnabled ? "aktif" : "nonaktif"}.
             </CardDescription>
-          </div>
-          {organization.midtransEnabled && serverHint ? (
-            <Badge variant={organization.midtransIsProduction ? "warning" : "success"}>
-              {organization.midtransIsProduction ? "Production" : "Sandbox"}
-            </Badge>
-          ) : (
-            <Badge variant="secondary">Nonaktif</Badge>
-          )}
-        </CardHeader>
-        <CardContent>
-          <MidtransSettingsForm
-            enabled={organization.midtransEnabled}
-            isProduction={organization.midtransIsProduction}
-            serverHint={serverHint}
-            clientHint={clientHint}
-            notifyUrl={notifyUrl}
-          />
-        </CardContent>
-      </Card>
+          </CardHeader>
+        </Card>
+      )}
     </div>
   );
 }

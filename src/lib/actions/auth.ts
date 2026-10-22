@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { signIn, signOut } from "@/lib/auth";
+import { isProPlusActive } from "@/lib/billing/plans";
 import { db } from "@/lib/db";
 
 const registerSchema = z.object({
@@ -67,8 +68,31 @@ export async function loginAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").toLowerCase().trim();
   const password = String(formData.get("password") ?? "");
+
+  if (email) {
+    const user = await db.user.findUnique({
+      where: { email },
+      include: {
+        memberships: {
+          include: { organization: true },
+          take: 1,
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+    const membership = user?.memberships[0];
+    if (
+      membership?.role === "STAFF" &&
+      !isProPlusActive(membership.organization)
+    ) {
+      return {
+        error:
+          "Akses staf memerlukan paket Pro+ aktif. Hubungi owner untuk memperpanjang langganan.",
+      };
+    }
+  }
 
   try {
     await signIn("credentials", {

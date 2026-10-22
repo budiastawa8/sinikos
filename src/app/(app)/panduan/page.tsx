@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
 import {
+  DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA,
   DEFAULT_PRO_WA_MONTHLY_QUOTA,
+  activePlanCode,
   isProActive,
+  planLabel,
 } from "@/lib/billing/plans";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,7 @@ const TOC = [
 export default async function GuidePage() {
   const { organization } = await requireOrg();
   const pro = isProActive(organization);
+  const currentPlan = planLabel(activePlanCode(organization));
   const notifyUrl = notificationUrlHint();
 
   return (
@@ -130,17 +134,33 @@ export default async function GuidePage() {
             kontrak; tagihan dan catat bayar manual.
           </li>
           <li>
-            <span className="font-medium">Pro:</span> tanpa batas jumlah, plus
-            link bayar Midtrans (jika Anda aktifkan) dan WhatsApp otomatis.
+            <span className="font-medium">Pro:</span> tanpa batas jumlah, link
+            bayar Midtrans (opsional), WhatsApp otomatis (kuota{" "}
+            {DEFAULT_PRO_WA_MONTHLY_QUOTA}/bulan).
+          </li>
+          <li>
+            <span className="font-medium">Pro+:</span> semua Pro, plus multi-staf
+            (hingga 5), laporan tunggakan/okupansi + CSV, kuota WA{" "}
+            {DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA}/bulan. Menu{" "}
+            <Link href="/staff" className="font-medium text-primary underline">
+              Tim
+            </Link>{" "}
+            dan{" "}
+            <Link href="/laporan" className="font-medium text-primary underline">
+              Laporan
+            </Link>
+            .
           </li>
         </ul>
         <p className="mt-3 text-sm text-muted-foreground">
           Bayar langganan SiniKos lewat menu Langganan (akun Midtrans platform).
-          Itu terpisah dari Midtrans sewa milik Anda.
+          Itu terpisah dari Midtrans sewa milik Anda. Hanya owner yang bisa
+          berlangganan; staf fokus login operasional.
         </p>
         <p className="mt-2 text-sm">
           Paket Anda sekarang:{" "}
-          <span className="font-medium">{pro ? "Pro" : "Gratis"}</span>.
+          <span className="font-medium">{currentPlan}</span>
+          {!pro ? " (Gratis)." : "."}
         </p>
         <Button asChild className="mt-4 h-11 w-full sm:w-auto">
           <Link href="/billing">Buka Langganan</Link>

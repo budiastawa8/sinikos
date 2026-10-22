@@ -1,5 +1,9 @@
+import type { PlanCode } from "@prisma/client";
 import { db } from "@/lib/db";
-import { proWhatsAppMonthlyQuota } from "@/lib/billing/plans";
+import {
+  activePlanCode,
+  whatsAppMonthlyQuotaForPlan,
+} from "@/lib/billing/plans";
 
 export function whatsappQuotaMonthRange(asOf = new Date()) {
   const start = new Date(asOf.getFullYear(), asOf.getMonth(), 1, 0, 0, 0, 0);
@@ -19,7 +23,13 @@ export async function getWhatsAppQuotaUsage(
   organizationId: string,
   asOf = new Date(),
 ) {
-  const limit = proWhatsAppMonthlyQuota();
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { plan: true, planExpiresAt: true },
+  });
+  const plan: PlanCode = org ? activePlanCode(org, asOf) : "FREE";
+  const limit =
+    plan === "FREE" ? 0 : whatsAppMonthlyQuotaForPlan(plan);
   const { start, end } = whatsappQuotaMonthRange(asOf);
   const used = await db.whatsAppMessageLog.count({
     where: {
@@ -33,8 +43,8 @@ export async function getWhatsAppQuotaUsage(
     used,
     limit,
     remaining,
-    exhausted: used >= limit,
-    nearLimit: used >= Math.ceil(limit * 0.8),
+    exhausted: limit > 0 ? used >= limit : true,
+    nearLimit: limit > 0 && used >= Math.ceil(limit * 0.8),
     periodLabel: start.toLocaleDateString("id-ID", {
       month: "long",
       year: "numeric",
@@ -44,10 +54,13 @@ export async function getWhatsAppQuotaUsage(
 
 export async function assertWhatsAppQuotaAvailable(organizationId: string) {
   const usage = await getWhatsAppQuotaUsage(organizationId);
-  if (usage.exhausted) {
+  if (usage.limit < 1 || usage.exhausted) {
     return {
       ok: false as const,
-      error: `Kuota WhatsApp bulan ${usage.periodLabel} sudah habis (${usage.used}/${usage.limit}). Pengiriman dilanjut bulan depan, atau hubungi pengelola SiniKos.`,
+      error:
+        usage.limit < 1
+          ? "WhatsApp otomatis hanya untuk paket Pro atau Pro+."
+          : `Kuota WhatsApp bulan ${usage.periodLabel} sudah habis (${usage.used}/${usage.limit}). Pengiriman dilanjut bulan depan, atau upgrade ke Pro+ untuk kuota lebih besar.`,
       usage,
     };
   }

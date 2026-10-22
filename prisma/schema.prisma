@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   OWNER
+  STAFF
 }
 
 enum RoomStatus {
@@ -49,6 +50,7 @@ enum WhatsAppStatus {
 enum PlanCode {
   FREE
   PRO
+  PRO_PLUS
 }
 
 enum SubscriptionStatus {

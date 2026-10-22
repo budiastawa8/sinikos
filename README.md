@@ -44,15 +44,17 @@ Buka [http://localhost:3000](http://localhost:3000).
 
 ## Paket langganan
 
-| | Gratis | Pro |
-| --- | --- | --- |
-| Harga | Rp 0 | Rp 50.000 / bulan atau Rp 500.000 / tahun |
-| Properti | 1 | Tanpa batas |
-| Kamar | 5 | Tanpa batas |
-| Kontrak aktif | 5 | Tanpa batas |
-| Catat bayar manual | Ya | Ya |
-| Link bayar sewa (Midtrans pemilik) | Tidak | Ya |
-| WhatsApp otomatis | Tidak | Ya (kuota ~200 pesan/bulan, bisa diubah lewat `PLATFORM_WA_MONTHLY_QUOTA`) |
+| | Gratis | Pro | Pro+ |
+| --- | --- | --- | --- |
+| Harga | Rp 0 | Rp 50.000 / bulan atau Rp 500.000 / tahun | Rp 99.000 / bulan atau Rp 990.000 / tahun |
+| Properti | 1 | Tanpa batas | Tanpa batas |
+| Kamar | 5 | Tanpa batas | Tanpa batas |
+| Kontrak aktif | 5 | Tanpa batas | Tanpa batas |
+| Catat bayar manual | Ya | Ya | Ya |
+| Link bayar sewa (Midtrans pemilik) | Tidak | Ya | Ya |
+| WhatsApp otomatis | Tidak | Ya (~200/bulan, `PLATFORM_WA_MONTHLY_QUOTA`) | Ya (~500/bulan, `PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA`) |
+| Multi-staf | Tidak | Tidak | Ya (hingga 5 karyawan) |
+| Laporan tunggakan & okupansi + CSV | Tidak | Tidak | Ya |
 
 Uang langganan masuk ke Midtrans platform (`PLATFORM_MIDTRANS_SERVER_KEY`), terpisah dari uang sewa (key per organisasi). Organisasi yang sudah ada saat migrasi ini dapat Pro selama 30 hari. Setelah masa berlaku lewat, cron harian menurunkan paket ke Gratis; data lama tetap ada, penambahan baru ikut batas Gratis.
 
@@ -72,7 +74,7 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 
 - **Vercel → Deployments:** pastikan build hijau setelah push.
 - **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
-- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
 - WhatsApp provider: `fonnte` (default), `meta` (Cloud API + opsional template), `custom` (`WHATSAPP_GATEWAY_URL` POST `{phone,message}`).
 - Langganan platform: biarkan Sandbox sampai siap; Production = uang sungguhan + Notification URL `/api/payments/midtrans/subscription`.
 - Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support = arahkan ke **Panduan** in-app.

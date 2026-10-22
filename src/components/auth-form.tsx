@@ -17,9 +17,10 @@ import type { ActionState } from "@/lib/actions/auth";
 type Props = {
   mode: "login" | "register";
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
+  notice?: string | null;
 };
 
-export function AuthForm({ mode, action }: Props) {
+export function AuthForm({ mode, action, notice }: Props) {
   const [state, formAction, pending] = useActionState(action, {});
 
   return (
@@ -36,6 +37,11 @@ export function AuthForm({ mode, action }: Props) {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
+          {notice && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+              {notice}
+            </p>
+          )}
           {mode === "register" && (
             <div className="space-y-2">
               <Label htmlFor="name">Nama</Label>

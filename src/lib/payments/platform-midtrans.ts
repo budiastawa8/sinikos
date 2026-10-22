@@ -1,8 +1,13 @@
 import { addMonths } from "date-fns";
-import type { BillingPeriod, Subscription } from "@prisma/client";
+import type { BillingPeriod, PlanCode, Subscription } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizeEnvLike } from "@/lib/crypto/secrets";
-import { periodMonths, priceForPeriod } from "@/lib/billing/plans";
+import {
+  higherPlan,
+  isProActive,
+  periodMonths,
+  priceForPeriod,
+} from "@/lib/billing/plans";
 import {
   apiBaseUrl,
   appBaseUrl,
@@ -145,11 +150,15 @@ async function activatePaidSubscription(
   }
 
   const now = new Date();
+  const purchased = sub.plan === "PRO_PLUS" ? "PRO_PLUS" : "PRO";
   const base =
-    org.plan === "PRO" && org.planExpiresAt && org.planExpiresAt > now
+    isProActive(org, now) && org.planExpiresAt
       ? org.planExpiresAt
       : now;
   const endsAt = addMonths(base, periodMonths(sub.period));
+  const nextPlan = isProActive(org, now)
+    ? higherPlan(org.plan, purchased)
+    : purchased;
 
   const updated = await db.subscription.updateMany({
     where: { id: sub.id, status: "PENDING" },
@@ -167,9 +176,16 @@ async function activatePaidSubscription(
     const current = await db.subscription.findUnique({ where: { id: sub.id } });
     if (current?.status === "ACTIVE" && current.endsAt) {
       if (!org.planExpiresAt || org.planExpiresAt < current.endsAt) {
+        const planOnRecord =
+          current.plan === "PRO_PLUS" ? "PRO_PLUS" : "PRO";
         await db.organization.update({
           where: { id: org.id },
-          data: { plan: "PRO", planExpiresAt: current.endsAt },
+          data: {
+            plan: isProActive(org, now)
+              ? higherPlan(org.plan, planOnRecord)
+              : planOnRecord,
+            planExpiresAt: current.endsAt,
+          },
         });
       }
       return {
@@ -183,7 +199,7 @@ async function activatePaidSubscription(
 
   await db.organization.update({
     where: { id: org.id },
-    data: { plan: "PRO", planExpiresAt: endsAt },
+    data: { plan: nextPlan, planExpiresAt: endsAt },
   });
 
   return { ok: true as const, paid: true as const, endsAt };
@@ -192,18 +208,21 @@ async function activatePaidSubscription(
 export async function createSubscriptionPayment(params: {
   organizationId: string;
   period: BillingPeriod;
+  plan?: "PRO" | "PRO_PLUS";
   customerName: string;
   customerEmail?: string;
 }): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   const config = getPlatformMidtransConfig();
   if (!config.ok) return config;
 
-  const amount = priceForPeriod(params.period);
+  const plan: PlanCode = params.plan === "PRO_PLUS" ? "PRO_PLUS" : "PRO";
+  const amount = priceForPeriod(params.period, plan);
   const recent = await db.subscription.findFirst({
     where: {
       organizationId: params.organizationId,
       status: "PENDING",
       period: params.period,
+      plan,
       amount,
       paymentUrl: { not: null },
       createdAt: { gt: new Date(Date.now() - 12 * 60 * 60 * 1000) },
@@ -217,7 +236,7 @@ export async function createSubscriptionPayment(params: {
   const subscription = await db.subscription.create({
     data: {
       organizationId: params.organizationId,
-      plan: "PRO",
+      plan,
       period: params.period,
       status: "PENDING",
       amount,
@@ -225,8 +244,11 @@ export async function createSubscriptionPayment(params: {
   });
 
   const orderId = `SUB-${subscription.id}-${Date.now()}`;
+  const planName = plan === "PRO_PLUS" ? "Pro+" : "Pro";
   const label =
-    params.period === "YEARLY" ? "SiniKos Pro 12 bulan" : "SiniKos Pro 1 bulan";
+    params.period === "YEARLY"
+      ? `SiniKos ${planName} 12 bulan`
+      : `SiniKos ${planName} 1 bulan`;
 
   try {
     const res = await fetch(

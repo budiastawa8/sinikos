@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { isProPlusActive } from "@/lib/billing/plans";
 import { db } from "@/lib/db";
 
 /** Deduped per request — layout + page boleh memanggil tanpa 2× round-trip auth/DB. */
@@ -40,10 +41,28 @@ export const requireOrg = cache(async () => {
     redirect("/onboarding");
   }
 
+  // Staf hanya boleh masuk saat Pro+ aktif.
+  if (
+    membership.role === "STAFF" &&
+    !isProPlusActive(membership.organization)
+  ) {
+    redirect("/login?error=staf");
+  }
+
   return {
     session,
     organizationId: membership.organizationId,
     organization: membership.organization,
     role: membership.role,
+    membershipId: membership.id,
   };
+});
+
+/** Hanya owner — langganan, staf, kunci Midtrans. */
+export const requireOwner = cache(async () => {
+  const ctx = await requireOrg();
+  if (ctx.role !== "OWNER") {
+    redirect("/dashboard");
+  }
+  return ctx;
 });

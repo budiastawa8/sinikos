@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { isProActive } from "@/lib/billing/plans";
+import { activePlanCode, planLabel } from "@/lib/billing/plans";
 import { requireOrg } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +10,10 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const { organization } = await requireOrg();
-  const planLabel = isProActive(organization) ? "Pro" : "Gratis";
+  const label = planLabel(activePlanCode(organization));
 
   return (
-    <AppShell orgName={organization.name} planLabel={planLabel}>
+    <AppShell orgName={organization.name} planLabel={label}>
       {children}
     </AppShell>
   );

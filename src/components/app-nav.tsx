@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Building2,
+  ChartColumn,
   CreditCard,
   DoorOpen,
   FileText,
   LayoutDashboard,
   LogOut,
   Settings,
+  UserCog,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +37,8 @@ export const MOBILE_TAB_LINKS: AppNavLink[] = [
 
 /** Item sekunder — drawer mobile + bagian bawah sidebar desktop. */
 export const APP_MORE_LINKS: AppNavLink[] = [
+  { href: "/laporan", label: "Laporan", icon: ChartColumn },
+  { href: "/staff", label: "Tim", icon: UserCog },
   { href: "/billing", label: "Langganan", icon: CreditCard },
   { href: "/panduan", label: "Panduan", icon: BookOpen },
   { href: "/settings", label: "Pengaturan", icon: Settings },
