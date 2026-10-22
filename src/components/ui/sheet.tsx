@@ -25,7 +25,7 @@ SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
-    side?: "left" | "right";
+    side?: "left" | "right" | "bottom";
   }
 >(({ side = "left", className, children, ...props }, ref) => (
   <SheetPortal>
@@ -33,13 +33,20 @@ const SheetContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 flex h-full w-[min(18rem,85vw)] flex-col bg-card p-0 shadow-lg",
-        side === "left" && "inset-y-0 left-0 border-r",
-        side === "right" && "inset-y-0 right-0 border-l",
+        "fixed z-50 flex flex-col bg-card p-0 shadow-lg outline-none",
+        side === "left" &&
+          "inset-y-0 left-0 h-full w-[min(18rem,85vw)] border-r",
+        side === "right" &&
+          "inset-y-0 right-0 h-full w-[min(18rem,85vw)] border-l",
+        side === "bottom" &&
+          "inset-x-0 bottom-0 max-h-[85vh] w-full rounded-t-2xl border-t",
         className,
       )}
       {...props}
     >
+      {side === "bottom" && (
+        <div className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-muted" />
+      )}
       {children}
       <DialogPrimitive.Close className="absolute right-3 top-3 rounded-md p-2 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring">
         <X className="size-4" />
@@ -74,6 +81,18 @@ function SheetTitle({
   );
 }
 
+function SheetDescription({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  );
+}
+
 export {
   Sheet,
   SheetTrigger,
@@ -81,4 +100,5 @@ export {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 };

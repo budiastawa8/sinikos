@@ -31,41 +31,61 @@ export async function generateInvoicesNowAction() {
   return result;
 }
 
-export async function recordPaymentAction(formData: FormData) {
-  const { organizationId } = await requireOrg();
-  const invoiceId = String(formData.get("invoiceId") ?? "");
-  const amount = Number(formData.get("amount"));
-  const method = String(formData.get("method") ?? "TRANSFER");
-  const notes = String(formData.get("notes") ?? "").trim() || null;
+export async function recordPaymentAction(
+  formData: FormData,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  try {
+    const { organizationId } = await requireOrg();
+    const invoiceId = String(formData.get("invoiceId") ?? "");
+    const amount = Number(formData.get("amount"));
+    const method = String(formData.get("method") ?? "TRANSFER");
+    const notes = String(formData.get("notes") ?? "").trim() || null;
 
-  const invoice = await db.invoice.findFirst({
-    where: { id: invoiceId, organizationId },
-  });
-  if (!invoice) throw new Error("Tagihan tidak ditemukan");
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("Nominal pembayaran tidak valid");
+    const invoice = await db.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
+    });
+    if (!invoice) {
+      return { ok: false, error: "Tagihan tidak ditemukan" };
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { ok: false, error: "Nominal pembayaran tidak valid" };
+    }
+
+    const amountPaid = invoice.amountPaid + amount;
+    const status = deriveStatus(invoice.amount, amountPaid, invoice.dueDate);
+
+    await db.$transaction([
+      db.payment.create({
+        data: { invoiceId, amount, method, notes },
+      }),
+      db.invoice.update({
+        where: { id: invoiceId },
+        data: { amountPaid, status },
+      }),
+    ]);
+
+    if (status === InvoiceStatus.PAID) {
+      await activateLeaseIfFirstInvoicePaid(invoiceId);
+    }
+
+    revalidatePath("/invoices");
+    revalidatePath("/leases");
+    revalidatePath("/dashboard");
+
+    return {
+      ok: true,
+      message:
+        status === InvoiceStatus.PAID
+          ? "Pembayaran dicatat — tagihan lunas."
+          : "Pembayaran dicatat.",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      error:
+        e instanceof Error ? e.message : "Gagal mencatat pembayaran",
+    };
   }
-
-  const amountPaid = invoice.amountPaid + amount;
-  const status = deriveStatus(invoice.amount, amountPaid, invoice.dueDate);
-
-  await db.$transaction([
-    db.payment.create({
-      data: { invoiceId, amount, method, notes },
-    }),
-    db.invoice.update({
-      where: { id: invoiceId },
-      data: { amountPaid, status },
-    }),
-  ]);
-
-  if (status === InvoiceStatus.PAID) {
-    await activateLeaseIfFirstInvoicePaid(invoiceId);
-  }
-
-  revalidatePath("/invoices");
-  revalidatePath("/leases");
-  revalidatePath("/dashboard");
 }
 
 export async function resendWhatsAppAction(
@@ -172,7 +192,7 @@ export async function syncMidtransStatusAction(
       return {
         ok: true,
         message:
-          "Pembayaran terdeteksi — tagihan dilunasi (kamar OCCUPIED jika check-in menunggu bayar)",
+          "Pembayaran terdeteksi — tagihan dilunasi (kamar terisi jika check-in menunggu bayar)",
       };
     }
     if ("pending" in result && result.pending) {

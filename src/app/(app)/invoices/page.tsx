@@ -3,10 +3,7 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
 import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
-import {
-  generateInvoicesNowAction,
-  recordPaymentAction,
-} from "@/lib/actions/invoices";
+import { generateInvoicesNowAction } from "@/lib/actions/invoices";
 import {
   invoiceStatusBadgeVariant,
   invoiceStatusLabel,
@@ -14,8 +11,6 @@ import {
   whatsappStatusLabel,
 } from "@/lib/labels";
 import { formatRupiah, formatDate, MONTHS_ID } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -33,9 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { GenerateInvoicesButton } from "@/components/generate-invoices-button";
-import { PayLinkButton } from "@/components/pay-link-button";
-import { SyncMidtransButton } from "@/components/sync-midtrans-button";
-import { SendWhatsAppButton } from "@/components/send-whatsapp-button";
+import { InvoiceRowActions } from "@/components/invoice-row-actions";
 import { isOrgMidtransConfigured } from "@/lib/payments/midtrans";
 
 export default async function InvoicesPage() {
@@ -93,8 +86,8 @@ export default async function InvoicesPage() {
             Melunasi tagihan check-in pertama akan mengaktifkan kontrak dan
             menandai kamar terisi.{" "}
             {pro
-              ? "Generate tagihan, catat bayar manual, kirim WhatsApp, atau (opsional) buat link Midtrans."
-              : "Generate tagihan atau catat bayar manual. Link bayar dan WhatsApp ada di paket Pro."}{" "}
+              ? "Generate tagihan, lalu pakai tombol Aksi untuk catat bayar, WhatsApp, atau link Midtrans."
+              : "Generate tagihan atau catat bayar lewat tombol Aksi. Link bayar dan WhatsApp ada di paket Pro."}{" "}
             {!pro && (
               <Link href="/billing" className="font-medium text-primary underline">
                 Lihat langganan.
@@ -164,7 +157,7 @@ export default async function InvoicesPage() {
                 <TableHead>Jatuh tempo</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>WA</TableHead>
-                <TableHead>Aksi</TableHead>
+                <TableHead className="w-[6.5rem]">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -177,18 +170,25 @@ export default async function InvoicesPage() {
               ) : (
                 invoices.map((inv) => {
                   const lastWa = inv.whatsappLogs[0];
+                  const periodLabel = `${MONTHS_ID[inv.periodMonth - 1]} ${inv.periodYear}`;
                   return (
                     <TableRow key={inv.id}>
-                      <TableCell>
-                        {MONTHS_ID[inv.periodMonth - 1]} {inv.periodYear}
+                      <TableCell className="whitespace-nowrap">
+                        {periodLabel}
                       </TableCell>
                       <TableCell>{inv.lease.tenant.name}</TableCell>
                       <TableCell>
                         {inv.lease.room.property.name} · {inv.lease.room.code}
                       </TableCell>
-                      <TableCell>{formatRupiah(inv.amount)}</TableCell>
-                      <TableCell>{formatRupiah(inv.amountPaid)}</TableCell>
-                      <TableCell>{formatDate(inv.dueDate)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {formatRupiah(inv.amount)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {formatRupiah(inv.amountPaid)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {formatDate(inv.dueDate)}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={invoiceStatusBadgeVariant(inv.status)}>
                           {invoiceStatusLabel(inv.status)}
@@ -206,53 +206,19 @@ export default async function InvoicesPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex min-w-[12rem] flex-col gap-2">
-                          {inv.status !== "PAID" && pro && midtransReady && (
-                            <PayLinkButton
-                              invoiceId={inv.id}
-                              existingUrl={inv.paymentUrl}
-                            />
-                          )}
-                          {inv.status !== "PAID" &&
-                            midtransReady &&
-                            inv.midtransOrderId && (
-                              <SyncMidtransButton invoiceId={inv.id} />
-                            )}
-                          {inv.status !== "PAID" && (
-                            <form
-                              action={recordPaymentAction}
-                              className="flex flex-wrap gap-2"
-                            >
-                              <input
-                                type="hidden"
-                                name="invoiceId"
-                                value={inv.id}
-                              />
-                              <Input
-                                name="amount"
-                                type="number"
-                                min={1}
-                                placeholder="Nominal"
-                                className="h-8 w-28"
-                                required
-                              />
-                              <input
-                                type="hidden"
-                                name="method"
-                                value="TRANSFER"
-                              />
-                              <Button type="submit" size="sm">
-                                Catat bayar
-                              </Button>
-                            </form>
-                          )}
-                          {pro && (
-                            <SendWhatsAppButton
-                              invoiceId={inv.id}
-                              disabled={Boolean(waQuota?.exhausted)}
-                            />
-                          )}
-                        </div>
+                        <InvoiceRowActions
+                          invoiceId={inv.id}
+                          tenantName={inv.lease.tenant.name}
+                          periodLabel={periodLabel}
+                          amount={inv.amount}
+                          amountPaid={inv.amountPaid}
+                          status={inv.status}
+                          paymentUrl={inv.paymentUrl}
+                          midtransOrderId={inv.midtransOrderId}
+                          pro={pro}
+                          midtransReady={midtransReady}
+                          waDisabled={Boolean(waQuota?.exhausted)}
+                        />
                       </TableCell>
                     </TableRow>
                   );
