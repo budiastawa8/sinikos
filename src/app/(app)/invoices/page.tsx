@@ -72,7 +72,7 @@ export default async function InvoicesPage() {
         },
       },
     }),
-    pro ? getWhatsAppQuotaUsage(organizationId) : Promise.resolve(null),
+    getWhatsAppQuotaUsage(organizationId),
   ]);
 
   return (
@@ -87,7 +87,7 @@ export default async function InvoicesPage() {
             menandai kamar terisi.{" "}
             {pro
               ? "Generate tagihan, lalu pakai tombol Aksi untuk catat bayar, WhatsApp, atau link Midtrans."
-              : "Generate tagihan atau catat bayar lewat tombol Aksi. Link bayar dan WhatsApp ada di paket Pro."}{" "}
+              : "Generate tagihan, catat bayar, atau kirim WhatsApp manual (kuota terbatas). Link Midtrans dan reminder otomatis ada di Pro."}{" "}
             {!pro && (
               <Link href="/billing" className="font-medium text-primary underline">
                 Lihat langganan.
@@ -128,11 +128,23 @@ export default async function InvoicesPage() {
         </div>
       </div>
 
-      {waQuota?.exhausted && (
+      {waQuota.exhausted && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Kuota WhatsApp {waQuota.periodLabel} habis ({waQuota.used}/
-          {waQuota.limit}). Tombol Kirim WA dan pengiriman otomatis ditahan;
-          catat bayar manual tetap bisa.
+          {waQuota.limit}). Tombol Kirim WA ditahan
+          {pro ? " dan pengiriman otomatis ditunda" : ""}
+          ; catat bayar manual tetap bisa
+          {!pro ? (
+            <>
+              .{" "}
+              <Link href="/billing" className="font-medium underline">
+                Upgrade ke Pro
+              </Link>{" "}
+              untuk kuota lebih besar dan reminder otomatis.
+            </>
+          ) : (
+            "."
+          )}
         </div>
       )}
 
@@ -216,8 +228,9 @@ export default async function InvoicesPage() {
                           paymentUrl={inv.paymentUrl}
                           midtransOrderId={inv.midtransOrderId}
                           pro={pro}
+                          canWhatsApp
                           midtransReady={midtransReady}
-                          waDisabled={Boolean(waQuota?.exhausted)}
+                          waDisabled={Boolean(waQuota.exhausted)}
                         />
                       </TableCell>
                     </TableRow>

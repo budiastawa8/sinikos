@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   const { organizationId, organization } = await requireOrg();
   const pro = isProActive(organization);
 
-  const [rooms, occupied, unpaid, overdue, recentInvoices, failedWa, waQuota] =
+  const [rooms, occupied, unpaid, overdue, recentInvoices, waQuota] =
     await Promise.all([
       db.room.count({ where: { property: { organizationId } } }),
       db.room.count({
@@ -63,14 +63,7 @@ export default async function DashboardPage() {
           },
         },
       }),
-      pro
-        ? Promise.resolve(0)
-        : db.whatsAppMessageLog.count({
-            where: { organizationId, status: "FAILED" },
-          }),
-      pro
-        ? getWhatsAppQuotaUsage(organizationId)
-        : Promise.resolve(null),
+      getWhatsAppQuotaUsage(organizationId),
     ]);
 
   const available = rooms - occupied;
@@ -98,14 +91,24 @@ export default async function DashboardPage() {
 
       <PwaInstallHint />
 
-      {waQuota?.exhausted && (
+      {waQuota.exhausted && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Kuota WhatsApp {waQuota.periodLabel} sudah habis ({waQuota.used}/
-          {waQuota.limit}). Tagihan tetap bisa dicatat manual; pengiriman WA
-          otomatis lanjut bulan depan.
+          {waQuota.limit}). Tagihan tetap bisa dicatat manual
+          {!pro ? (
+            <>
+              .{" "}
+              <Link href="/billing" className="font-medium underline">
+                Upgrade ke Pro
+              </Link>{" "}
+              untuk kuota lebih besar.
+            </>
+          ) : (
+            "; pengiriman otomatis lanjut bulan depan."
+          )}
         </div>
       )}
-      {waQuota && !waQuota.exhausted && waQuota.nearLimit && (
+      {!waQuota.exhausted && waQuota.nearLimit && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Kuota WhatsApp hampir habis: {waQuota.used}/{waQuota.limit} pesan di{" "}
           {waQuota.periodLabel}.
@@ -117,12 +120,8 @@ export default async function DashboardPage() {
         <StatCard title="Kamar kosong" value={String(available)} />
         <StatCard title="Tagihan belum lunas" value={String(unpaid + overdue)} />
         <StatCard
-          title={pro ? "Kuota WA bulan ini" : "WA gagal kirim"}
-          value={
-            pro && waQuota
-              ? `${waQuota.used}/${waQuota.limit}`
-              : String(failedWa)
-          }
+          title="Kuota WA bulan ini"
+          value={`${waQuota.used}/${waQuota.limit}`}
         />
       </div>
 

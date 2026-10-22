@@ -28,8 +28,7 @@ export async function getWhatsAppQuotaUsage(
     select: { plan: true, planExpiresAt: true },
   });
   const plan: PlanCode = org ? activePlanCode(org, asOf) : "FREE";
-  const limit =
-    plan === "FREE" ? 0 : whatsAppMonthlyQuotaForPlan(plan);
+  const limit = whatsAppMonthlyQuotaForPlan(plan);
   const { start, end } = whatsappQuotaMonthRange(asOf);
   const used = await db.whatsAppMessageLog.count({
     where: {
@@ -43,8 +42,9 @@ export async function getWhatsAppQuotaUsage(
     used,
     limit,
     remaining,
-    exhausted: limit > 0 ? used >= limit : true,
-    nearLimit: limit > 0 && used >= Math.ceil(limit * 0.8),
+    exhausted: used >= limit,
+    nearLimit: used >= Math.ceil(limit * 0.8),
+    plan,
     periodLabel: start.toLocaleDateString("id-ID", {
       month: "long",
       year: "numeric",
@@ -54,13 +54,16 @@ export async function getWhatsAppQuotaUsage(
 
 export async function assertWhatsAppQuotaAvailable(organizationId: string) {
   const usage = await getWhatsAppQuotaUsage(organizationId);
-  if (usage.limit < 1 || usage.exhausted) {
+  if (usage.exhausted) {
+    const upgradeHint =
+      usage.plan === "FREE"
+        ? " Upgrade ke Pro untuk kuota 200 pesan/bulan dan reminder otomatis."
+        : usage.plan === "PRO"
+          ? " Upgrade ke Pro+ untuk kuota lebih besar, atau tunggu bulan depan."
+          : " Pengiriman dilanjut bulan depan.";
     return {
       ok: false as const,
-      error:
-        usage.limit < 1
-          ? "WhatsApp otomatis hanya untuk paket Pro atau Pro+."
-          : `Kuota WhatsApp bulan ${usage.periodLabel} sudah habis (${usage.used}/${usage.limit}). Pengiriman dilanjut bulan depan, atau upgrade ke Pro+ untuk kuota lebih besar.`,
+      error: `Kuota WhatsApp bulan ${usage.periodLabel} sudah habis (${usage.used}/${usage.limit}).${upgradeHint}`,
       usage,
     };
   }

@@ -33,6 +33,8 @@ type Props = {
   paymentUrl?: string | null;
   midtransOrderId?: string | null;
   pro: boolean;
+  /** Kirim WA manual (Gratis + Pro / Pro+). */
+  canWhatsApp?: boolean;
   midtransReady: boolean;
   waDisabled?: boolean;
 };
@@ -47,6 +49,7 @@ export function InvoiceRowActions({
   paymentUrl,
   midtransOrderId,
   pro,
+  canWhatsApp = pro,
   midtransReady,
   waDisabled,
 }: Props) {
@@ -57,7 +60,7 @@ export function InvoiceRowActions({
   const outstanding = Math.max(0, amount - amountPaid);
   const unpaid = status !== "PAID";
 
-  if (!unpaid && !pro) {
+  if (!unpaid && !canWhatsApp) {
     return <span className="text-sm text-muted-foreground">-</span>;
   }
 
@@ -183,7 +186,7 @@ export function InvoiceRowActions({
                 label="Cek status bayar Midtrans"
               />
             )}
-            {pro && (
+            {canWhatsApp && (
               <ActionRow
                 disabled={pending || waDisabled}
                 onClick={() =>
@@ -194,10 +197,16 @@ export function InvoiceRowActions({
                   })
                 }
                 label="Kirim WhatsApp"
-                hint={waDisabled ? "Kuota WhatsApp bulan ini habis" : undefined}
+                hint={
+                  waDisabled
+                    ? "Kuota WhatsApp bulan ini habis"
+                    : !pro
+                      ? "Paket Gratis: kirim manual (kuota terbatas)"
+                      : undefined
+                }
               />
             )}
-            {!unpaid && !pro && (
+            {!unpaid && !canWhatsApp && (
               <p className="px-3 py-4 text-sm text-muted-foreground">
                 Tagihan sudah lunas.
               </p>

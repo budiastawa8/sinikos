@@ -12,6 +12,9 @@ export const PRO_PLUS_PRICES = {
   YEARLY: 990_000,
 } as const;
 
+/** Kuota WA manual paket Gratis (coba fitur; tanpa reminder otomatis). */
+export const DEFAULT_FREE_WA_MONTHLY_QUOTA = 10;
+
 /** Kuota pesan WhatsApp terkirim per organisasi per bulan kalender (paket Pro). */
 export const DEFAULT_PRO_WA_MONTHLY_QUOTA = 200;
 
@@ -21,25 +24,38 @@ export const DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA = 500;
 /** Maksimal anggota staf (bukan owner) di Pro+. */
 export const PRO_PLUS_MAX_STAFF = 5;
 
-export function proWhatsAppMonthlyQuota() {
-  const raw = process.env.PLATFORM_WA_MONTHLY_QUOTA?.trim();
-  if (!raw) return DEFAULT_PRO_WA_MONTHLY_QUOTA;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 1) return DEFAULT_PRO_WA_MONTHLY_QUOTA;
+function readPositiveIntEnv(raw: string | undefined, fallback: number) {
+  if (!raw?.trim()) return fallback;
+  const n = Number(raw.trim());
+  if (!Number.isFinite(n) || n < 1) return fallback;
   return Math.floor(n);
 }
 
+export function freeWhatsAppMonthlyQuota() {
+  return readPositiveIntEnv(
+    process.env.PLATFORM_WA_FREE_MONTHLY_QUOTA,
+    DEFAULT_FREE_WA_MONTHLY_QUOTA,
+  );
+}
+
+export function proWhatsAppMonthlyQuota() {
+  return readPositiveIntEnv(
+    process.env.PLATFORM_WA_MONTHLY_QUOTA,
+    DEFAULT_PRO_WA_MONTHLY_QUOTA,
+  );
+}
+
 export function proPlusWhatsAppMonthlyQuota() {
-  const raw = process.env.PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA?.trim();
-  if (!raw) return DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 1) return DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA;
-  return Math.floor(n);
+  return readPositiveIntEnv(
+    process.env.PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA,
+    DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA,
+  );
 }
 
 export function whatsAppMonthlyQuotaForPlan(plan: PlanCode) {
   if (plan === "PRO_PLUS") return proPlusWhatsAppMonthlyQuota();
-  return proWhatsAppMonthlyQuota();
+  if (plan === "PRO") return proWhatsAppMonthlyQuota();
+  return freeWhatsAppMonthlyQuota();
 }
 
 export const PLAN_FEATURES = {
@@ -48,11 +64,12 @@ export const PLAN_FEATURES = {
     "Sampai 5 kamar",
     "Sampai 5 kontrak aktif",
     "Tagihan dan catat bayar manual",
+    `WhatsApp manual (kuota ${DEFAULT_FREE_WA_MONTHLY_QUOTA} pesan/bulan)`,
   ],
   PRO: [
     "Properti, kamar, dan kontrak tanpa batas",
     "Link bayar Midtrans untuk uang sewa (akun Anda)",
-    `WhatsApp tagihan/reminder (kuota ${DEFAULT_PRO_WA_MONTHLY_QUOTA} pesan/bulan)`,
+    `WhatsApp tagihan + reminder otomatis (kuota ${DEFAULT_PRO_WA_MONTHLY_QUOTA} pesan/bulan)`,
     "Semua yang ada di paket Gratis",
   ],
   PRO_PLUS: [
@@ -90,7 +107,7 @@ const FREE_LIMITS: PlanLimits = {
   maxRooms: 5,
   maxActiveLeases: 5,
   maxStaff: 0,
-  whatsapp: false,
+  whatsapp: true,
   onlineRentPayment: false,
   reports: false,
 };
@@ -121,7 +138,7 @@ export function isPaidPlan(plan: PlanCode) {
   return PAID_PLANS.includes(plan);
 }
 
-/** Pro atau Pro+ masih berlaku (fitur bayar: Midtrans sewa, WA, tanpa batas kamar). */
+/** Pro atau Pro+ masih berlaku (Midtrans sewa, reminder WA otomatis, tanpa batas kamar). */
 export function isProActive(
   org: { plan: PlanCode; planExpiresAt: Date | null },
   now = new Date(),

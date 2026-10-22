@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireOrg } from "@/lib/tenant";
 import {
+  DEFAULT_FREE_WA_MONTHLY_QUOTA,
   DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA,
   DEFAULT_PRO_WA_MONTHLY_QUOTA,
   activePlanCode,
@@ -131,11 +132,12 @@ export default async function GuidePage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">Gratis:</span> batas properti/kamar/
-            kontrak; tagihan dan catat bayar manual.
+            kontrak; tagihan dan catat bayar manual; WhatsApp manual (kuota{" "}
+            {DEFAULT_FREE_WA_MONTHLY_QUOTA}/bulan).
           </li>
           <li>
             <span className="font-medium">Pro:</span> tanpa batas jumlah, link
-            bayar Midtrans (opsional), WhatsApp otomatis (kuota{" "}
+            bayar Midtrans (opsional), WhatsApp + reminder otomatis (kuota{" "}
             {DEFAULT_PRO_WA_MONTHLY_QUOTA}/bulan).
           </li>
           <li>
@@ -265,26 +267,29 @@ export default async function GuidePage() {
 
       <GuideSection id="whatsapp" title="7. WhatsApp tagihan">
         <ul className="list-disc space-y-2 pl-5">
-          <li>Tersedia di paket Pro; aktifkan centang WhatsApp di Pengaturan.</li>
+          <li>
+            <span className="font-medium">Gratis:</span> kirim manual dari Tagihan
+            (Aksi → Kirim WhatsApp), kuota{" "}
+            {DEFAULT_FREE_WA_MONTHLY_QUOTA} pesan/bulan. Tidak ada reminder
+            otomatis.
+          </li>
+          <li>
+            <span className="font-medium">Pro / Pro+:</span> aktifkan centang
+            WhatsApp di Pengaturan untuk reminder otomatis (cron), plus kirim
+            manual. Kuota {DEFAULT_PRO_WA_MONTHLY_QUOTA} (Pro) atau{" "}
+            {DEFAULT_PRO_PLUS_WA_MONTHLY_QUOTA} (Pro+)/bulan.
+          </li>
           <li>
             Isi &quot;Info pembayaran di pesan WA&quot; (rekening/transfer) agar
             penyewa tahu cara bayar manual.
           </li>
           <li>
-            Kirim dari menu Tagihan, atau biarkan cron harian mengirim di tanggal
-            tagihan / hari reminder.
+            Pemakaian kuota terlihat di Dashboard dan Pengaturan (reset tiap awal
+            bulan; hanya pesan sukses yang dihitung).
           </li>
           <li>
-            Ada kuota sekitar{" "}
-            <span className="font-medium">
-              {DEFAULT_PRO_WA_MONTHLY_QUOTA} pesan terkirim per bulan
-            </span>{" "}
-            per bisnis (reset tiap awal bulan). Pemakaian terlihat di Dashboard
-            dan Pengaturan.
-          </li>
-          <li>
-            Jika kuota habis, tagihan dan catat bayar manual tetap jalan; WA
-            otomatis ditahan sampai bulan berikutnya.
+            Jika kuota habis, tagihan dan catat bayar manual tetap jalan; kirim WA
+            ditahan sampai bulan berikutnya.
           </li>
           <li>
             Pengiriman memakai gateway platform SiniKos (bukan akun WhatsApp
@@ -330,7 +335,8 @@ export default async function GuidePage() {
           </li>
           <li>
             <span className="font-medium">WA gagal / token invalid:</span>{" "}
-            pastikan paket Pro, WhatsApp aktif, nomor valid, kuota belum habis,
+            pastikan kuota belum habis, nomor valid; untuk otomatis butuh Pro +
+            centang WhatsApp di Pengaturan,
             dan pengelola platform memakai token Device Fonnte (bukan Account
             Token), perangkat connect, lalu redeploy setelah mengubah env.
           </li>

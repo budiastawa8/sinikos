@@ -9,7 +9,6 @@ import {
   sendInvoiceWhatsApp,
 } from "@/lib/billing/generate";
 import { activateLeaseIfFirstInvoicePaid } from "@/lib/billing/activate-lease";
-import { isProActive } from "@/lib/billing/plans";
 import {
   createSnapPayment,
   syncInvoicePaymentStatus,
@@ -92,20 +91,9 @@ export async function resendWhatsAppAction(
   formData: FormData,
 ): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
   try {
-    const { organizationId, organization } = await requireOrg();
-    if (!isProActive(organization)) {
-      return {
-        ok: false,
-        error:
-          "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
-      };
-    }
-    if (!organization.whatsappEnabled) {
-      return {
-        ok: false,
-        error: "WhatsApp dinonaktifkan di pengaturan",
-      };
-    }
+    const { organizationId } = await requireOrg();
+    // Kirim manual: semua paket (Gratis 10/bln, Pro/Pro+ kuota lebih besar).
+    // Reminder otomatis (cron) tetap hanya Pro + toggle di Pengaturan.
 
     const invoiceId = String(formData.get("invoiceId") ?? "");
     const invoice = await db.invoice.findFirst({

@@ -32,7 +32,7 @@ export default async function SettingsPage() {
   const { organization, organizationId, role } = await requireOrg();
   const isOwner = role === "OWNER";
   const pro = isProActive(organization);
-  const waQuota = pro ? await getWhatsAppQuotaUsage(organizationId) : null;
+  const waQuota = await getWhatsAppQuotaUsage(organizationId);
   const serverHint = storedKeyHint(organization.midtransServerKeyEnc);
   const clientHint = storedKeyHint(organization.midtransClientKeyEnc);
   const notifyUrl = notificationUrlHint();
@@ -147,7 +147,8 @@ export default async function SettingsPage() {
             </div>
             {!pro && (
               <p className="text-sm text-muted-foreground">
-                WhatsApp otomatis ada di paket Pro / Pro+.{" "}
+                Reminder WhatsApp otomatis ada di Pro / Pro+. Paket Gratis tetap
+                bisa kirim WA manual dari Tagihan (kuota terbatas).{" "}
                 <Link href="/billing" className="font-medium text-primary underline">
                   Lihat langganan.
                 </Link>
@@ -172,8 +173,8 @@ export default async function SettingsPage() {
           <CardTitle>WhatsApp</CardTitle>
           <CardDescription>
             Pengiriman memakai gateway platform SiniKos (Fonnte / Meta / custom).
-            Aktifkan centang di atas (paket Pro / Pro+) dan pastikan nomor
-            penyewa valid.{" "}
+            Pastikan nomor penyewa valid. Reminder otomatis butuh centang di atas
+            + paket Pro.{" "}
             <Link
               href="/panduan#whatsapp"
               className="font-medium text-primary underline"
@@ -183,35 +184,36 @@ export default async function SettingsPage() {
             .
           </CardDescription>
         </CardHeader>
-        {waQuota && (
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              Pemakaian {waQuota.periodLabel}:{" "}
-              <span className="font-medium">
-                {waQuota.used} / {waQuota.limit}
-              </span>{" "}
-              pesan terkirim (hanya yang sukses dihitung).
-            </p>
-            {waQuota.exhausted ? (
-              <p className="text-amber-800">
-                Kuota bulan ini habis. Pengiriman otomatis dan tombol Kirim WA
-                ditahan sampai bulan berikutnya
-                {organization.plan !== "PRO_PLUS"
+        <CardContent className="space-y-2 text-sm">
+          <p>
+            Pemakaian {waQuota.periodLabel}:{" "}
+            <span className="font-medium">
+              {waQuota.used} / {waQuota.limit}
+            </span>{" "}
+            pesan terkirim (hanya yang sukses dihitung)
+            {!pro ? " — paket Gratis, kirim manual" : ""}.
+          </p>
+          {waQuota.exhausted ? (
+            <p className="text-amber-800">
+              Kuota bulan ini habis. Tombol Kirim WA ditahan sampai bulan
+              berikutnya
+              {!pro
+                ? ", atau upgrade ke Pro untuk kuota lebih besar dan reminder otomatis"
+                : waQuota.plan !== "PRO_PLUS"
                   ? ", atau upgrade ke Pro+ untuk kuota lebih besar"
                   : ""}
-                .
-              </p>
-            ) : waQuota.nearLimit ? (
-              <p className="text-amber-800">
-                Mendekati batas kuota. Sisa {waQuota.remaining} pesan.
-              </p>
-            ) : (
-              <p className="text-muted-foreground">
-                Sisa {waQuota.remaining} pesan bulan ini.
-              </p>
-            )}
-          </CardContent>
-        )}
+              .
+            </p>
+          ) : waQuota.nearLimit ? (
+            <p className="text-amber-800">
+              Mendekati batas kuota. Sisa {waQuota.remaining} pesan.
+            </p>
+          ) : (
+            <p className="text-muted-foreground">
+              Sisa {waQuota.remaining} pesan bulan ini.
+            </p>
+          )}
+        </CardContent>
       </Card>
 
       {isOwner ? (

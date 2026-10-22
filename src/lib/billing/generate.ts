@@ -137,14 +137,6 @@ export async function sendInvoiceWhatsApp(invoiceId: string) {
     return { ok: false as const, error: "Tagihan tidak ditemukan" };
   }
 
-  if (!isProActive(invoice.organization)) {
-    return {
-      ok: false as const,
-      error:
-        "WhatsApp otomatis tersedia di paket Pro. Buka menu Langganan untuk upgrade.",
-    };
-  }
-
   const quota = await assertWhatsAppQuotaAvailable(invoice.organizationId);
   if (!quota.ok) {
     return { ok: false as const, error: quota.error };
