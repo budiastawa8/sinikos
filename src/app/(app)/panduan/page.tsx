@@ -15,6 +15,7 @@ import {
 
 const TOC = [
   { id: "mulai", label: "Mulai tanpa Midtrans" },
+  { id: "siklus", label: "Siklus tagihan sewa" },
   { id: "langganan", label: "Paket & langganan" },
   { id: "midtrans", label: "Link bayar Midtrans (opsional)" },
   { id: "sandbox", label: "Uji Sandbox" },
@@ -78,14 +79,15 @@ export default async function GuidePage() {
             <Link href="/leases" className="font-medium text-primary underline">
               Kontrak
             </Link>
-            .
+            . Sistem langsung membuat tagihan pertama (bayar di muka).
           </li>
           <li>
-            Buat tagihan di{" "}
+            Di{" "}
             <Link href="/invoices" className="font-medium text-primary underline">
               Tagihan
-            </Link>{" "}
-            → catat bayar manual saat penyewa transfer ke rekening Anda.
+            </Link>
+            , catat bayar manual (atau link Midtrans). Setelah lunas, kamar
+            menjadi OCCUPIED dan kontrak aktif.
           </li>
         </ol>
         <p className="mt-3 text-sm text-muted-foreground">
@@ -94,7 +96,34 @@ export default async function GuidePage() {
         </p>
       </GuideSection>
 
-      <GuideSection id="langganan" title="2. Paket & langganan">
+      <GuideSection id="siklus" title="2. Siklus tagihan sewa">
+        <p className="mb-3">
+          Atur di{" "}
+          <Link href="/settings" className="font-medium text-primary underline">
+            Pengaturan
+          </Link>
+          . Kedua mode wajib bayar di muka.
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <span className="font-medium">Kalender / prorata:</span> masuk
+            di tengah bulan → tagihan harian untuk sisa bulan{" "}
+            <span className="font-medium">tanpa menghitung hari check-in</span>
+            , lalu bulanan penuh serempak di tanggal yang Anda pilih (biasanya
+            tanggal 1).
+          </li>
+          <li>
+            <span className="font-medium">Anniversary:</span> pilih tanggal
+            masuk di kontrak; tagihan penuh berulang setiap tanggal itu.
+          </li>
+        </ul>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Check-in yang belum dilunasi berstatus &quot;Menunggu bayar&quot; —
+          bisa dibatalkan selama belum ada pembayaran.
+        </p>
+      </GuideSection>
+
+      <GuideSection id="langganan" title="3. Paket & langganan">
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">Gratis:</span> batas properti/kamar/
@@ -118,7 +147,7 @@ export default async function GuidePage() {
         </Button>
       </GuideSection>
 
-      <GuideSection id="midtrans" title="3. Link bayar Midtrans (opsional)">
+      <GuideSection id="midtrans" title="4. Link bayar Midtrans (opsional)">
         <p className="text-sm text-muted-foreground">
           Hanya jika Anda ingin penyewa bayar online. Uang sewa masuk ke akun
           Midtrans <span className="font-medium text-foreground">Anda</span>,
@@ -156,7 +185,7 @@ export default async function GuidePage() {
         </Button>
       </GuideSection>
 
-      <GuideSection id="sandbox" title="4. Uji Sandbox">
+      <GuideSection id="sandbox" title="5. Uji Sandbox">
         <ol className="list-decimal space-y-2 pl-5">
           <li>Pastikan Mode Production di Pengaturan SiniKos <span className="font-medium">mati</span>.</li>
           <li>Buat atau buka tagihan belum lunas → buat link bayar Midtrans.</li>
@@ -172,7 +201,7 @@ export default async function GuidePage() {
         </ol>
       </GuideSection>
 
-      <GuideSection id="production" title="5. Pindah ke Production">
+      <GuideSection id="production" title="6. Pindah ke Production">
         <p className="text-sm text-muted-foreground">
           Hanya setelah Sandbox sukses sampai tagihan{" "}
           <span className="font-medium text-foreground">PAID</span>. Production
@@ -214,7 +243,7 @@ export default async function GuidePage() {
         </p>
       </GuideSection>
 
-      <GuideSection id="whatsapp" title="6. WhatsApp tagihan">
+      <GuideSection id="whatsapp" title="7. WhatsApp tagihan">
         <ul className="list-disc space-y-2 pl-5">
           <li>Tersedia di paket Pro; aktifkan centang WhatsApp di Pengaturan.</li>
           <li>
@@ -240,7 +269,7 @@ export default async function GuidePage() {
         </ul>
       </GuideSection>
 
-      <GuideSection id="pwa" title="7. Pasang di HP (PWA)">
+      <GuideSection id="pwa" title="8. Pasang di HP (PWA)">
         <p className="text-sm text-muted-foreground">
           SiniKos bisa dipasang ke layar utama seperti aplikasi, tanpa Play
           Store. Butuh kunjungan lewat HTTPS (mis. sinikos.vercel.app).
@@ -263,7 +292,7 @@ export default async function GuidePage() {
         </ul>
       </GuideSection>
 
-      <GuideSection id="masalah" title="8. Kalau ada masalah">
+      <GuideSection id="masalah" title="9. Kalau ada masalah">
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">Link bayar gagal:</span> cek Server Key,

@@ -55,8 +55,9 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Organisasi & billing</CardTitle>
           <CardDescription>
-            Cron harian akan generate tagihan pada tanggal yang dipilih dan
-            mengirim WhatsApp jika diaktifkan.
+            Kedua siklus memakai bayar di muka. Tagihan pertama wajib lunas
+            sebelum kamar OCCUPIED. Cron membuat tagihan berikutnya di tanggal
+            jatuh tempo.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,9 +71,34 @@ export default async function SettingsPage() {
                 defaultValue={organization.name}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="billingCycle">Siklus tagihan sewa</Label>
+              <select
+                id="billingCycle"
+                name="billingCycle"
+                required
+                defaultValue={organization.billingCycle}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="CALENDAR_PRORATA">
+                  Kalender / prorata (serempak di tanggal tetap)
+                </option>
+                <option value="ANNIVERSARY">
+                  Anniversary (mengikuti tanggal masuk)
+                </option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Prorata: hari check-in tidak dihitung; sisa hari sampai akhir
+                bulan × (sewa ÷ hari dalam bulan), lalu bulanan penuh di tanggal
+                serempak. Anniversary: sewa penuh tiap tanggal masuk yang dipilih
+                di kontrak.
+              </p>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="billingDay">Tanggal tagihan tiap bulan</Label>
+                <Label htmlFor="billingDay">
+                  Tanggal serempak (mode kalender)
+                </Label>
                 <Input
                   id="billingDay"
                   name="billingDay"
@@ -82,6 +108,10 @@ export default async function SettingsPage() {
                   required
                   defaultValue={organization.billingDay}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Dipakai jika siklus kalender/prorata (biasanya 1). Diabaikan
+                  untuk anniversary.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reminderDaysBefore">

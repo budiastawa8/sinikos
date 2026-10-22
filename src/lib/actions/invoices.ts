@@ -8,6 +8,7 @@ import {
   generateInvoicesForOrg,
   sendInvoiceWhatsApp,
 } from "@/lib/billing/generate";
+import { activateLeaseIfFirstInvoicePaid } from "@/lib/billing/activate-lease";
 import { isProActive } from "@/lib/billing/plans";
 import {
   createSnapPayment,
@@ -58,7 +59,12 @@ export async function recordPaymentAction(formData: FormData) {
     }),
   ]);
 
+  if (status === InvoiceStatus.PAID) {
+    await activateLeaseIfFirstInvoicePaid(invoiceId);
+  }
+
   revalidatePath("/invoices");
+  revalidatePath("/leases");
   revalidatePath("/dashboard");
 }
 
@@ -153,6 +159,7 @@ export async function syncMidtransStatusAction(
 
     const result = await syncInvoicePaymentStatus(invoiceId);
     revalidatePath("/invoices");
+    revalidatePath("/leases");
     revalidatePath("/dashboard");
 
     if (!result.ok) {
@@ -162,7 +169,11 @@ export async function syncMidtransStatusAction(
       return { ok: true, message: "Tagihan sudah lunas" };
     }
     if ("paid" in result && result.paid) {
-      return { ok: true, message: "Pembayaran terdeteksi — tagihan dilunasi" };
+      return {
+        ok: true,
+        message:
+          "Pembayaran terdeteksi — tagihan dilunasi (kamar OCCUPIED jika check-in menunggu bayar)",
+      };
     }
     if ("pending" in result && result.pending) {
       return {

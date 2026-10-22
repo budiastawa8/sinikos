@@ -1,24 +1,19 @@
-import { InvoiceStatus, LeaseStatus } from "@prisma/client";
+import { BillingCycle, InvoiceStatus, LeaseStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { expireLapsedPlans } from "@/lib/billing/entitlements";
 import { isProActive } from "@/lib/billing/plans";
 import { assertWhatsAppQuotaAvailable } from "@/lib/billing/whatsapp-quota";
+import {
+  clampBillingDay,
+  dueDateFor,
+  periodKey,
+} from "@/lib/billing/cycle";
 import { MONTHS_ID, formatRupiah, normalizePhone } from "@/lib/utils";
 import {
   createSnapPayment,
   isOrgMidtransConfigured,
 } from "@/lib/payments/midtrans";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/fonnte";
-
-function periodKey(date = new Date()) {
-  return { year: date.getFullYear(), month: date.getMonth() + 1 };
-}
-
-function dueDateFor(year: number, month: number, billingDay: number) {
-  const lastDay = new Date(year, month, 0).getDate();
-  const day = Math.min(Math.max(billingDay, 1), lastDay);
-  return new Date(year, month - 1, day, 23, 59, 59);
-}
 
 export function buildInvoiceMessage(params: {
   tenantName: string;
@@ -55,9 +50,18 @@ export function buildInvoiceMessage(params: {
   return lines.join("\n");
 }
 
+function sameCalendarDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 export async function generateInvoicesForOrg(
   organizationId: string,
   asOf = new Date(),
+  opts?: { onlyDueToday?: boolean },
 ) {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
@@ -65,6 +69,7 @@ export async function generateInvoicesForOrg(
   if (!org) return { created: 0, invoices: [] as string[] };
 
   const { year, month } = periodKey(asOf);
+  const today = asOf.getDate();
   const leases = await db.lease.findMany({
     where: { organizationId, status: LeaseStatus.ACTIVE },
     include: {
@@ -76,6 +81,15 @@ export async function generateInvoicesForOrg(
   const createdIds: string[] = [];
 
   for (const lease of leases) {
+    if (lease.startDate > asOf) continue;
+
+    const anchor =
+      org.billingCycle === BillingCycle.ANNIVERSARY
+        ? clampBillingDay(lease.billingAnchorDay)
+        : clampBillingDay(org.billingDay);
+
+    if (opts?.onlyDueToday && today !== anchor) continue;
+
     const existing = await db.invoice.findUnique({
       where: {
         leaseId_periodYear_periodMonth: {
@@ -87,7 +101,7 @@ export async function generateInvoicesForOrg(
     });
     if (existing) continue;
 
-    const dueDate = dueDateFor(year, month, org.billingDay);
+    const dueDate = dueDateFor(year, month, anchor);
     const invoice = await db.invoice.create({
       data: {
         organizationId,
@@ -184,23 +198,24 @@ export async function runDailyBillingJob(asOf = new Date()) {
   let messagesSent = 0;
   let messagesFailed = 0;
 
-  const today = asOf.getDate();
-  const { year, month } = periodKey(asOf);
-
   for (const org of orgs) {
-    if (today === org.billingDay) {
-      const gen = await generateInvoicesForOrg(org.id, asOf);
-      invoicesCreated += gen.created;
-    }
+    const gen = await generateInvoicesForOrg(org.id, asOf, {
+      onlyDueToday: true,
+    });
+    invoicesCreated += gen.created;
 
     if (!org.whatsappEnabled || !isProActive(org)) continue;
 
     const invoices = await db.invoice.findMany({
       where: {
         organizationId: org.id,
-        status: { in: [InvoiceStatus.UNPAID, InvoiceStatus.PARTIAL, InvoiceStatus.OVERDUE] },
-        periodYear: year,
-        periodMonth: month,
+        status: {
+          in: [
+            InvoiceStatus.UNPAID,
+            InvoiceStatus.PARTIAL,
+            InvoiceStatus.OVERDUE,
+          ],
+        },
       },
       include: {
         whatsappLogs: {
@@ -212,15 +227,12 @@ export async function runDailyBillingJob(asOf = new Date()) {
 
     for (const invoice of invoices) {
       const alreadySent = invoice.whatsappLogs.length > 0;
-      const isBillingDay = today === org.billingDay;
+      const isDueDay = sameCalendarDay(invoice.dueDate, asOf);
       const reminderDate = new Date(invoice.dueDate);
       reminderDate.setDate(reminderDate.getDate() - org.reminderDaysBefore);
-      const isReminderDay =
-        reminderDate.getFullYear() === asOf.getFullYear() &&
-        reminderDate.getMonth() === asOf.getMonth() &&
-        reminderDate.getDate() === asOf.getDate();
+      const isReminderDay = sameCalendarDay(reminderDate, asOf);
 
-      if (!isBillingDay && !isReminderDay) continue;
+      if (!isDueDay && !isReminderDay) continue;
       if (alreadySent && !isReminderDay) continue;
 
       const result = await sendInvoiceWhatsApp(invoice.id);
@@ -228,7 +240,6 @@ export async function runDailyBillingJob(asOf = new Date()) {
       else messagesFailed += 1;
     }
 
-    // Mark overdue
     await db.invoice.updateMany({
       where: {
         organizationId: org.id,

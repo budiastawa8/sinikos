@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { BillingCycle } from "@prisma/client";
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
@@ -15,15 +16,25 @@ export type SettingsActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
+const BILLING_CYCLES = new Set<string>([
+  BillingCycle.CALENDAR_PRORATA,
+  BillingCycle.ANNIVERSARY,
+]);
+
 export async function updateSettingsAction(formData: FormData) {
   const { organizationId, organization } = await requireOrg();
   const name = String(formData.get("name") ?? "").trim();
+  const billingCycleRaw = String(formData.get("billingCycle") ?? "");
   const billingDay = Number(formData.get("billingDay"));
   const reminderDaysBefore = Number(formData.get("reminderDaysBefore"));
   const whatsappEnabled = formData.get("whatsappEnabled") === "on";
   const whatsappPayInfo = String(formData.get("whatsappPayInfo") ?? "").trim();
 
   if (name.length < 2) throw new Error("Nama bisnis wajib");
+  if (!BILLING_CYCLES.has(billingCycleRaw)) {
+    throw new Error("Siklus tagihan tidak valid");
+  }
+  const billingCycle = billingCycleRaw as BillingCycle;
   if (!Number.isInteger(billingDay) || billingDay < 1 || billingDay > 28) {
     throw new Error("Tanggal tagihan harus 1–28");
   }
@@ -39,6 +50,7 @@ export async function updateSettingsAction(formData: FormData) {
     where: { id: organizationId },
     data: {
       name,
+      billingCycle,
       billingDay,
       reminderDaysBefore,
       whatsappEnabled: isProActive(organization) && whatsappEnabled,
@@ -49,6 +61,7 @@ export async function updateSettingsAction(formData: FormData) {
   });
 
   revalidatePath("/settings");
+  revalidatePath("/leases");
   revalidatePath("/dashboard");
 }
 

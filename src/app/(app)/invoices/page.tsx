@@ -84,6 +84,8 @@ export default async function InvoicesPage() {
             Tagihan
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
+            Melunasi tagihan check-in pertama akan mengaktifkan kontrak dan
+            menandai kamar OCCUPIED.{" "}
             {pro
               ? "Generate tagihan, catat bayar manual, kirim WhatsApp, atau (opsional) buat link Midtrans."
               : "Generate tagihan atau catat bayar manual. Link bayar dan WhatsApp ada di paket Pro."}{" "}

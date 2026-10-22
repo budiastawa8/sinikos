@@ -84,6 +84,7 @@ async function markInvoicePaidFromMidtrans(params: {
     params.amountPaid + params.amount,
   );
   const method = `MIDTRANS:${params.paymentType ?? "online"}`;
+  const paid = amountPaid >= params.invoiceAmount;
 
   await db.$transaction([
     db.payment.create({
@@ -99,14 +100,18 @@ async function markInvoicePaidFromMidtrans(params: {
       where: { id: params.invoiceId },
       data: {
         amountPaid,
-        status:
-          amountPaid >= params.invoiceAmount
-            ? InvoiceStatus.PAID
-            : InvoiceStatus.PARTIAL,
+        status: paid ? InvoiceStatus.PAID : InvoiceStatus.PARTIAL,
         midtransOrderId: params.orderId,
       },
     }),
   ]);
+
+  if (paid) {
+    const { activateLeaseIfFirstInvoicePaid } = await import(
+      "@/lib/billing/activate-lease"
+    );
+    await activateLeaseIfFirstInvoicePaid(params.invoiceId);
+  }
 }
 
 export function appBaseUrl() {

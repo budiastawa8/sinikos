@@ -96,9 +96,15 @@ export async function deleteTenantAction(formData: FormData) {
   const { organizationId } = await requireOrg();
   const id = String(formData.get("id") ?? "");
   const activeLease = await db.lease.findFirst({
-    where: { tenantId: id, organizationId, status: "ACTIVE" },
+    where: {
+      tenantId: id,
+      organizationId,
+      status: { in: ["ACTIVE", "PENDING"] },
+    },
   });
-  if (activeLease) throw new Error("Penyewa masih punya kontrak aktif");
+  if (activeLease) {
+    throw new Error("Penyewa masih punya kontrak aktif atau menunggu bayar");
+  }
 
   await db.tenant.deleteMany({ where: { id, organizationId } });
   revalidatePath("/tenants");

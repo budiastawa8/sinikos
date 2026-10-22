@@ -18,8 +18,18 @@ enum RoomStatus {
 }
 
 enum LeaseStatus {
+  /// Menunggu tagihan pertama lunas — kamar belum OCCUPIED
+  PENDING
   ACTIVE
   ENDED
+}
+
+/// Siklus tagihan sewa (bayar di muka untuk keduanya).
+enum BillingCycle {
+  /// Prorata harian sampai akhir bulan (hari check-in tidak dihitung), lalu serempak di billingDay
+  CALENDAR_PRORATA
+  /// Berulang mengikuti tanggal masuk (billingAnchorDay per kontrak)
+  ANNIVERSARY
 }
 
 enum InvoiceStatus {
@@ -102,7 +112,9 @@ model VerificationToken {
 model Organization {
   id                     String       @id @default(cuid())
   name                   String
+  /// Tanggal serempak (1–28) untuk mode CALENDAR_PRORATA
   billingDay             Int          @default(1)
+  billingCycle           BillingCycle @default(CALENDAR_PRORATA)
   whatsappEnabled        Boolean      @default(true)
   reminderDaysBefore     Int          @default(3)
   whatsappPayInfo        String       @default("Silakan transfer ke rekening yang tertera / hubungi pengelola.")
@@ -185,25 +197,28 @@ model Tenant {
 }
 
 model Lease {
-  id             String       @id @default(cuid())
-  organizationId String
-  roomId         String
-  tenantId       String
-  startDate      DateTime
-  endDate        DateTime?
-  monthlyRent    Int
-  status         LeaseStatus  @default(ACTIVE)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  room           Room         @relation(fields: [roomId], references: [id], onDelete: Restrict)
-  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  invoices       Invoice[]
+  id               String       @id @default(cuid())
+  organizationId   String
+  roomId           String
+  tenantId         String
+  startDate        DateTime
+  endDate          DateTime?
+  monthlyRent      Int
+  /// Hari jatuh tempo per bulan (1–28); untuk ANNIVERSARY = tanggal masuk yang dipilih
+  billingAnchorDay Int          @default(1)
+  status           LeaseStatus  @default(PENDING)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  room             Room         @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  tenant           Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invoices         Invoice[]
 
   @@index([organizationId])
   @@index([roomId])
   @@index([tenantId])
   @@index([status])
+  @@index([billingAnchorDay])
 }
 
 model Invoice {

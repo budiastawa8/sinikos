@@ -7,7 +7,12 @@ export async function getUsage(organizationId: string) {
   const [properties, rooms, activeLeases] = await Promise.all([
     db.property.count({ where: { organizationId } }),
     db.room.count({ where: { property: { organizationId } } }),
-    db.lease.count({ where: { organizationId, status: "ACTIVE" } }),
+    db.lease.count({
+      where: {
+        organizationId,
+        status: { in: ["ACTIVE", "PENDING"] },
+      },
+    }),
   ]);
   return { properties, rooms, activeLeases };
 }

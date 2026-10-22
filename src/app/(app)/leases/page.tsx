@@ -2,7 +2,11 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import { checkInAction, checkOutAction } from "@/lib/actions/leases";
+import {
+  cancelPendingLeaseAction,
+  checkInAction,
+  checkOutAction,
+} from "@/lib/actions/leases";
 import { formatRupiah, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +28,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Link from "next/link";
+
+function leaseStatusBadge(status: string) {
+  if (status === "ACTIVE") return "success" as const;
+  if (status === "PENDING") return "warning" as const;
+  return "secondary" as const;
+}
+
+function leaseStatusLabel(status: string) {
+  if (status === "PENDING") return "Menunggu bayar";
+  if (status === "ACTIVE") return "Aktif";
+  if (status === "ENDED") return "Selesai";
+  return status;
+}
 
 export default async function LeasesPage() {
   const { organizationId, organization } = await requireOrg();
@@ -32,8 +50,9 @@ export default async function LeasesPage() {
     entitlements.usage.activeLeases,
     entitlements.limits.maxActiveLeases,
   );
+  const isAnniversary = organization.billingCycle === "ANNIVERSARY";
 
-  const [leases, rooms, tenants] = await Promise.all([
+  const [leases, busyRoomIds, tenants] = await Promise.all([
     db.lease.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
@@ -42,6 +61,7 @@ export default async function LeasesPage() {
         id: true,
         monthlyRent: true,
         startDate: true,
+        billingAnchorDay: true,
         status: true,
         tenant: { select: { name: true } },
         room: {
@@ -52,18 +72,12 @@ export default async function LeasesPage() {
         },
       },
     }),
-    db.room.findMany({
+    db.lease.findMany({
       where: {
-        property: { organizationId },
-        status: { in: ["AVAILABLE", "MAINTENANCE"] },
+        organizationId,
+        status: { in: ["ACTIVE", "PENDING"] },
       },
-      orderBy: [{ property: { name: "asc" } }, { code: "asc" }],
-      select: {
-        id: true,
-        code: true,
-        price: true,
-        property: { select: { name: true } },
-      },
+      select: { roomId: true },
     }),
     db.tenant.findMany({
       where: { organizationId },
@@ -72,6 +86,22 @@ export default async function LeasesPage() {
     }),
   ]);
 
+  const busyIds = busyRoomIds.map((r) => r.roomId);
+  const rooms = await db.room.findMany({
+    where: {
+      property: { organizationId },
+      status: { in: ["AVAILABLE", "MAINTENANCE"] },
+      ...(busyIds.length > 0 ? { id: { notIn: busyIds } } : {}),
+    },
+    orderBy: [{ property: { name: "asc" } }, { code: "asc" }],
+    select: {
+      id: true,
+      code: true,
+      price: true,
+      property: { select: { name: true } },
+    },
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -79,7 +109,16 @@ export default async function LeasesPage() {
           Kontrak
         </h1>
         <p className="text-sm text-muted-foreground sm:text-base">
-          Check-in / check-out penyewa ke kamar.
+          Check-in membuat tagihan pertama di muka. Kamar baru{" "}
+          <span className="font-medium text-foreground">OCCUPIED</span> setelah
+          tagihan itu lunas.{" "}
+          {isAnniversary
+            ? "Siklus tagihan mengikuti tanggal masuk."
+            : `Siklus kalender/prorata (tanggal serempak ${organization.billingDay}).`}{" "}
+          <Link href="/settings" className="text-primary underline">
+            Ubah di Pengaturan
+          </Link>
+          .
         </p>
       </div>
 
@@ -109,23 +148,51 @@ export default async function LeasesPage() {
                       {lease.room.property.name} · {lease.room.code}
                     </TableCell>
                     <TableCell>{formatRupiah(lease.monthlyRent)}</TableCell>
-                    <TableCell>{formatDate(lease.startDate)}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={lease.status === "ACTIVE" ? "success" : "secondary"}
-                      >
-                        {lease.status}
+                      <div>{formatDate(lease.startDate)}</div>
+                      {isAnniversary && (
+                        <div className="text-xs text-muted-foreground">
+                          Tiap tgl {lease.billingAnchorDay}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={leaseStatusBadge(lease.status)}>
+                        {leaseStatusLabel(lease.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {lease.status === "ACTIVE" && (
-                        <form action={checkOutAction}>
-                          <input type="hidden" name="leaseId" value={lease.id} />
-                          <Button type="submit" size="sm" variant="outline">
-                            Check-out
-                          </Button>
-                        </form>
-                      )}
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        {lease.status === "PENDING" && (
+                          <>
+                            <Button asChild size="sm" variant="default">
+                              <Link href="/invoices">Lunasin tagihan</Link>
+                            </Button>
+                            <form action={cancelPendingLeaseAction}>
+                              <input
+                                type="hidden"
+                                name="leaseId"
+                                value={lease.id}
+                              />
+                              <Button type="submit" size="sm" variant="outline">
+                                Batalkan
+                              </Button>
+                            </form>
+                          </>
+                        )}
+                        {lease.status === "ACTIVE" && (
+                          <form action={checkOutAction}>
+                            <input
+                              type="hidden"
+                              name="leaseId"
+                              value={lease.id}
+                            />
+                            <Button type="submit" size="sm" variant="outline">
+                              Check-out
+                            </Button>
+                          </form>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -137,19 +204,26 @@ export default async function LeasesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Check-in baru</CardTitle>
+            <CardDescription>
+              {isAnniversary
+                ? "Pilih tanggal masuk — tagihan penuh berulang di tanggal itu."
+                : "Masuk di tengah bulan: prorata harian (hari masuk tidak dihitung), lalu serempak di tanggal tagihan."}{" "}
+              Tagihan pertama wajib lunas sebelum kamar terisi.
+            </CardDescription>
             {!entitlements.active &&
               entitlements.limits.maxActiveLeases != null && (
                 <CardDescription>
                   Paket Gratis: {entitlements.usage.activeLeases} dari{" "}
-                  {entitlements.limits.maxActiveLeases} kontrak aktif
+                  {entitlements.limits.maxActiveLeases} kontrak (aktif + menunggu
+                  bayar)
                 </CardDescription>
               )}
           </CardHeader>
           <CardContent>
             {atLeaseLimit ? (
               <PlanLimitNotice>
-                Batas kontrak aktif paket Gratis sudah tercapai. Check-out
-                tetap bisa dilakukan.
+                Batas kontrak paket Gratis sudah tercapai. Check-out atau
+                batalkan check-in menunggu bayar dulu.
               </PlanLimitNotice>
             ) : (
               <form action={checkInAction} className="space-y-4">
@@ -186,8 +260,14 @@ export default async function LeasesPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="startDate">Tanggal mulai</Label>
+                  <Label htmlFor="startDate">Tanggal masuk</Label>
                   <Input id="startDate" name="startDate" type="date" required />
+                  {isAnniversary && (
+                    <p className="text-xs text-muted-foreground">
+                      Tanggal ini menjadi siklus tagihan bulanan (maks. hari ke-28
+                      untuk bulan pendek).
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="monthlyRent">Sewa / bulan</Label>
@@ -201,7 +281,7 @@ export default async function LeasesPage() {
                   />
                 </div>
                 <Button type="submit" className="h-11 w-full">
-                  Check-in
+                  Buat check-in + tagihan
                 </Button>
               </form>
             )}
