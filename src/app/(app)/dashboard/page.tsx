@@ -82,7 +82,7 @@ export default async function DashboardPage() {
             Ringkasan {organization.name}
           </p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex">
           <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
             <Link href="/panduan">Panduan</Link>
           </Button>
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard title="Kamar terisi" value={`${occupied}/${rooms}`} />
         <StatCard title="Kamar kosong" value={String(available)} />
         <StatCard title="Tagihan belum lunas" value={String(unpaid + overdue)} />
