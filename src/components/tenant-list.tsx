@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { deleteTenantAction } from "@/lib/actions/properties";
 import { matchesSearch, normalizeSearch } from "@/lib/list-filter";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ListSearch } from "@/components/list-search";
+import { TenantDeleteButton } from "@/components/tenant-delete-button";
 import { TenantEditButton } from "@/components/tenant-edit-button";
 
 export type TenantListItem = {
@@ -96,17 +95,7 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
                       phone={t.phone}
                       fullWidth
                     />
-                    <form action={deleteTenantAction}>
-                      <input type="hidden" name="id" value={t.id} />
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="h-10 w-full"
-                      >
-                        Hapus
-                      </Button>
-                    </form>
+                    <TenantDeleteButton id={t.id} fullWidth />
                   </div>
                 </li>
               ))}
@@ -135,12 +124,7 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
                             name={t.name}
                             phone={t.phone}
                           />
-                          <form action={deleteTenantAction}>
-                            <input type="hidden" name="id" value={t.id} />
-                            <Button type="submit" size="sm" variant="ghost">
-                              Hapus
-                            </Button>
-                          </form>
+                          <TenantDeleteButton id={t.id} />
                         </div>
                       </TableCell>
                     </TableRow>

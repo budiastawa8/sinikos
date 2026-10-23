@@ -1,16 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  cancelPendingLeaseAction,
-  checkOutAction,
-} from "@/lib/actions/leases";
 import { leaseStatusLabel } from "@/lib/labels";
 import { matchesSearch, normalizeSearch } from "@/lib/list-filter";
 import { formatDate, formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -27,6 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ListSearch } from "@/components/list-search";
+import {
+  LeaseCheckOutButton,
+  LeasePendingActions,
+} from "@/components/lease-action-buttons";
 
 export type LeaseListItem = {
   id: string;
@@ -144,42 +142,10 @@ export function LeaseList({
 
                   <div className="mt-2 flex flex-row gap-2">
                     {lease.status === "PENDING" && (
-                      <>
-                        <Button asChild size="sm" className="h-10 min-w-0 flex-1">
-                          <Link href="/invoices">Lunasin</Link>
-                        </Button>
-                        <form
-                          action={cancelPendingLeaseAction}
-                          className="min-w-0 flex-1"
-                        >
-                          <input
-                            type="hidden"
-                            name="leaseId"
-                            value={lease.id}
-                          />
-                          <Button
-                            type="submit"
-                            size="sm"
-                            variant="outline"
-                            className="h-10 w-full"
-                          >
-                            Batalkan
-                          </Button>
-                        </form>
-                      </>
+                      <LeasePendingActions leaseId={lease.id} fullWidth />
                     )}
                     {lease.status === "ACTIVE" && (
-                      <form action={checkOutAction} className="min-w-0 flex-1">
-                        <input type="hidden" name="leaseId" value={lease.id} />
-                        <Button
-                          type="submit"
-                          size="sm"
-                          variant="outline"
-                          className="h-10 w-full"
-                        >
-                          Check-out
-                        </Button>
-                      </form>
+                      <LeaseCheckOutButton leaseId={lease.id} fullWidth />
                     )}
                   </div>
                 </li>
@@ -222,41 +188,10 @@ export function LeaseList({
                       <TableCell>
                         <div className="flex flex-row flex-wrap items-center justify-end gap-2">
                           {lease.status === "PENDING" && (
-                            <>
-                              <Button asChild size="sm" variant="default">
-                                <Link href="/invoices">Lunasin</Link>
-                              </Button>
-                              <form action={cancelPendingLeaseAction}>
-                                <input
-                                  type="hidden"
-                                  name="leaseId"
-                                  value={lease.id}
-                                />
-                                <Button
-                                  type="submit"
-                                  size="sm"
-                                  variant="outline"
-                                >
-                                  Batalkan
-                                </Button>
-                              </form>
-                            </>
+                            <LeasePendingActions leaseId={lease.id} />
                           )}
                           {lease.status === "ACTIVE" && (
-                            <form action={checkOutAction}>
-                              <input
-                                type="hidden"
-                                name="leaseId"
-                                value={lease.id}
-                              />
-                              <Button
-                                type="submit"
-                                size="sm"
-                                variant="outline"
-                              >
-                                Check-out
-                              </Button>
-                            </form>
+                            <LeaseCheckOutButton leaseId={lease.id} />
                           )}
                         </div>
                       </TableCell>

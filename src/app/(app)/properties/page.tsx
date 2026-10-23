@@ -3,11 +3,8 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import { createPropertyAction } from "@/lib/actions/properties";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PlanLimitNotice } from "@/components/plan-limit-notice";
+import { PropertyCreateForm } from "@/components/property-create-form";
 import { SetupNextHint } from "@/components/setup-next-hint";
 import {
   Card,
@@ -112,19 +109,7 @@ export default async function PropertiesPage() {
                 tetap bisa dikelola.
               </PlanLimitNotice>
             ) : (
-              <form action={createPropertyAction} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nama kos</Label>
-                  <Input id="name" name="name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Alamat</Label>
-                  <Input id="address" name="address" />
-                </div>
-                <Button type="submit" className="h-11 w-full sm:w-auto">
-                  Simpan
-                </Button>
-              </form>
+              <PropertyCreateForm />
             )}
           </CardContent>
         </Card>

@@ -3,10 +3,6 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import { createRoomAction } from "@/lib/actions/properties";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -15,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PlanLimitNotice } from "@/components/plan-limit-notice";
+import { RoomCreateForm } from "@/components/room-create-form";
 import { RoomList } from "@/components/room-list";
 
 export default async function PropertyDetailPage({
@@ -85,31 +82,7 @@ export default async function PropertyDetailPage({
                 tetap bisa diubah statusnya.
               </PlanLimitNotice>
             ) : (
-              <form action={createRoomAction} className="space-y-4">
-                <input type="hidden" name="propertyId" value={property.id} />
-                <div className="space-y-2">
-                  <Label htmlFor="code">Kode kamar</Label>
-                  <Input id="code" name="code" required placeholder="A01" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Harga sewa / bulan</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    required
-                    min={1}
-                    placeholder="1500000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Catatan</Label>
-                  <Input id="notes" name="notes" />
-                </div>
-                <Button type="submit" className="h-11 w-full">
-                  Simpan kamar
-                </Button>
-              </form>
+              <RoomCreateForm propertyId={property.id} />
             )}
           </CardContent>
         </Card>

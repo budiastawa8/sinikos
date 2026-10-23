@@ -1,14 +1,11 @@
 import { requireOrg } from "@/lib/tenant";
 import { isProActive } from "@/lib/billing/plans";
 import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
-import { updateSettingsAction } from "@/lib/actions/settings";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
 import { decryptSecret, maskSecret } from "@/lib/crypto/secrets";
 import { MidtransSettingsForm } from "@/components/midtrans-settings-form";
+import { SettingsForm } from "@/components/settings-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
@@ -67,104 +64,15 @@ export default async function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={updateSettingsAction} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nama bisnis</Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                defaultValue={organization.name}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="billingCycle">Siklus tagihan sewa</Label>
-              <select
-                id="billingCycle"
-                name="billingCycle"
-                required
-                defaultValue={organization.billingCycle}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="CALENDAR_PRORATA">
-                  Kalender / prorata (serempak di tanggal tetap)
-                </option>
-                <option value="ANNIVERSARY">
-                  Anniversary (mengikuti tanggal masuk)
-                </option>
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Prorata: hari check-in tidak dihitung; sisa hari sampai akhir
-                bulan × (sewa ÷ hari dalam bulan), lalu bulanan penuh di tanggal
-                serempak. Anniversary: sewa penuh tiap tanggal masuk yang dipilih
-                di kontrak.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="billingDay">
-                  Tanggal serempak (mode kalender)
-                </Label>
-                <Input
-                  id="billingDay"
-                  name="billingDay"
-                  type="number"
-                  min={1}
-                  max={28}
-                  required
-                  defaultValue={organization.billingDay}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Dipakai jika siklus kalender/prorata (biasanya 1). Diabaikan
-                  untuk anniversary.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reminderDaysBefore">
-                  Reminder WA (hari sebelum jatuh tempo)
-                </Label>
-                <Input
-                  id="reminderDaysBefore"
-                  name="reminderDaysBefore"
-                  type="number"
-                  min={0}
-                  max={14}
-                  required
-                  defaultValue={organization.reminderDaysBefore}
-                />
-              </div>
-            </div>
-            <div className="flex min-h-10 items-center gap-3">
-              <input
-                id="whatsappEnabled"
-                name="whatsappEnabled"
-                type="checkbox"
-                defaultChecked={pro && organization.whatsappEnabled}
-                disabled={!pro}
-                className="size-5 rounded border"
-              />
-              <Label htmlFor="whatsappEnabled">Aktifkan WhatsApp otomatis</Label>
-            </div>
-            {!pro && (
-              <p className="text-sm text-muted-foreground">
-                Reminder WhatsApp otomatis ada di Pro / Pro+. Paket Gratis tetap
-                bisa kirim WA manual dari Tagihan (kuota terbatas).{" "}
-                <Link href="/billing" className="font-medium text-primary underline">
-                  Lihat langganan.
-                </Link>
-              </p>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="whatsappPayInfo">Info pembayaran di pesan WA</Label>
-              <Textarea
-                id="whatsappPayInfo"
-                name="whatsappPayInfo"
-                rows={4}
-                defaultValue={organization.whatsappPayInfo}
-              />
-            </div>
-            <Button type="submit">Simpan pengaturan</Button>
-          </form>
+          <SettingsForm
+            name={organization.name}
+            billingCycle={organization.billingCycle}
+            billingDay={organization.billingDay}
+            reminderDaysBefore={organization.reminderDaysBefore}
+            whatsappEnabled={organization.whatsappEnabled}
+            whatsappPayInfo={organization.whatsappPayInfo}
+            pro={pro}
+          />
         </CardContent>
       </Card>
 

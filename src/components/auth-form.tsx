@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,10 @@ type Props = {
 export function AuthForm({ mode, action, notice }: Props) {
   const [state, formAction, pending] = useActionState(action, {});
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (state.error) toast.error(state.error);
+  }, [state.error]);
 
   return (
     <Card className="w-full max-w-md border-border/80 shadow-md">

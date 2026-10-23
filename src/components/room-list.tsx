@@ -1,11 +1,14 @@
+"use client";
+
 import { updateRoomStatusAction } from "@/lib/actions/properties";
+import { useServerAction } from "@/hooks/use-server-action";
 import {
   roomOccupancyBadgeVariant,
   roomOccupancyLabel,
 } from "@/lib/labels";
 import { formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   Card,
   CardContent,
@@ -39,12 +42,15 @@ function RoomStatusForm({
   status: string;
   fullWidth?: boolean;
 }) {
-  const current =
-    status === "MAINTENANCE" ? "MAINTENANCE" : "AVAILABLE";
+  const current = status === "MAINTENANCE" ? "MAINTENANCE" : "AVAILABLE";
+  const { pending, onSubmit } = useServerAction(updateRoomStatusAction, {
+    success: "Status kamar disimpan",
+    error: "Gagal mengubah status kamar",
+  });
 
   return (
     <form
-      action={updateRoomStatusAction}
+      onSubmit={onSubmit}
       className={
         fullWidth
           ? "flex flex-row gap-2"
@@ -56,19 +62,21 @@ function RoomStatusForm({
         name="status"
         defaultValue={current}
         aria-label="Status kamar"
-        className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+        disabled={pending}
+        className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm disabled:opacity-50"
       >
         <option value="AVAILABLE">Kosong</option>
         <option value="MAINTENANCE">Perawatan</option>
       </select>
-      <Button
-        type="submit"
+      <PendingSubmitButton
+        pending={pending}
+        pendingLabel="…"
         size="sm"
         variant="outline"
         className="h-10 shrink-0 px-3"
       >
         Simpan
-      </Button>
+      </PendingSubmitButton>
     </form>
   );
 }
