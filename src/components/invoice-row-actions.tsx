@@ -119,9 +119,7 @@ export function InvoiceRowActions({
           variant="outline"
           size="sm"
           className={
-            fullWidth
-              ? "h-11 w-full gap-1.5"
-              : "h-10 gap-1.5 px-3"
+            fullWidth ? "h-10 w-full gap-1.5" : "h-10 gap-1.5 px-3"
           }
           aria-label={`Aksi tagihan ${tenantName}`}
         >

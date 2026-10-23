@@ -107,7 +107,7 @@ export function InvoiceList({
           </p>
         ) : (
           <>
-            <ul className="space-y-3 md:hidden">
+            <ul className="space-y-2 md:hidden">
               {filtered.map((inv) => {
                 const periodLabel = `${MONTHS_ID[inv.periodMonth - 1]} ${inv.periodYear}`;
                 const outstanding = Math.max(0, inv.amount - inv.amountPaid);
@@ -116,41 +116,41 @@ export function InvoiceList({
                 return (
                   <li
                     key={inv.id}
-                    className="rounded-xl border bg-card px-3 py-3 shadow-sm"
+                    className="rounded-lg border bg-card px-3 py-2.5"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate font-medium leading-tight">
+                        <p className="truncate text-sm font-medium leading-tight">
                           {inv.tenantName}
                         </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {inv.propertyName} · {inv.roomCode} · {periodLabel}
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {inv.roomCode} · {periodLabel}
                         </p>
                       </div>
                       <Badge
                         variant={invoiceStatusBadgeVariant(inv.status)}
-                        className="shrink-0"
+                        className="h-5 shrink-0 px-1.5 text-[10px] leading-none"
                       >
                         {invoiceStatusLabel(inv.status)}
                       </Badge>
                     </div>
 
-                    <div className="mt-3">
-                      <p className="text-xs text-muted-foreground">
-                        {unpaid ? "Sisa bayar" : "Lunas"}
-                      </p>
-                      <p className="text-lg font-semibold tabular-nums leading-tight">
+                    <div className="mt-2 flex items-baseline justify-between gap-2">
+                      <p className="text-base font-semibold tabular-nums leading-none">
                         {formatRupiah(unpaid ? outstanding : inv.amount)}
+                        <span className="ml-1.5 text-[11px] font-normal text-muted-foreground">
+                          {unpaid ? "sisa" : "lunas"}
+                        </span>
                       </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        Jatuh tempo {formatDate(inv.dueDate)}
+                      <p className="shrink-0 text-[11px] text-muted-foreground">
+                        {formatDate(inv.dueDate)}
                         {inv.waStatus
-                          ? ` · WA ${whatsappStatusLabel(inv.waStatus)}`
+                          ? ` · ${whatsappStatusLabel(inv.waStatus)}`
                           : ""}
                       </p>
                     </div>
 
-                    <div className="mt-3">
+                    <div className="mt-2">
                       <InvoiceRowActions
                         invoiceId={inv.id}
                         tenantName={inv.tenantName}
