@@ -81,8 +81,6 @@ export default async function LeasesPage() {
     : "/properties";
 
   const hasLeases = leases.length > 0;
-  const canOfferCheckIn =
-    totalRooms > 0 && tenants.length > 0 && rooms.length > 0 && !atLeaseLimit;
 
   const usageLabel =
     !entitlements.active && entitlements.limits.maxActiveLeases != null
@@ -100,35 +98,33 @@ export default async function LeasesPage() {
       price: r.price,
       propertyName: r.property.name,
     })),
+    addRoomsHref,
   };
-
-  const showMobileTrigger =
-    hasLeases && (canOfferCheckIn || atLeaseLimit);
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div>
+        <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Kontrak
           </h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Check-in membuat tagihan pertama di muka. Kamar baru berstatus terisi
-            setelah tagihan itu lunas.{" "}
-            {isAnniversary
-              ? "Siklus tagihan mengikuti tanggal masuk."
-              : `Siklus kalender/prorata (tanggal serempak ${organization.billingDay}).`}{" "}
-            <Link href="/settings" className="text-primary underline">
-              Ubah di Pengaturan
-            </Link>
-            .
-          </p>
+          {hasLeases && (
+            <div className="xl:hidden">
+              <LeaseCheckInSheetTrigger {...checkInProps} />
+            </div>
+          )}
         </div>
-        {showMobileTrigger && (
-          <div className="xl:hidden">
-            <LeaseCheckInSheetTrigger {...checkInProps} />
-          </div>
-        )}
+        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+          Check-in membuat tagihan pertama di muka. Kamar baru berstatus terisi
+          setelah tagihan itu lunas.{" "}
+          {isAnniversary
+            ? "Siklus tagihan mengikuti tanggal masuk."
+            : `Siklus kalender/prorata (tanggal serempak ${organization.billingDay}).`}{" "}
+          <Link href="/settings" className="text-primary underline">
+            Ubah di Pengaturan
+          </Link>
+          .
+        </p>
       </div>
 
       {totalRooms === 0 && (
@@ -185,12 +181,10 @@ export default async function LeasesPage() {
           }))}
         />
 
-        {(hasLeases || canOfferCheckIn || atLeaseLimit) && (
-          <LeaseCheckInCard
-            {...checkInProps}
-            className={hasLeases ? "hidden xl:block" : undefined}
-          />
-        )}
+        <LeaseCheckInCard
+          {...checkInProps}
+          className={hasLeases ? "hidden xl:block" : undefined}
+        />
       </div>
     </div>
   );

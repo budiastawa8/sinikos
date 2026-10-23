@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ type PanelProps = {
   usageLabel?: string;
   tenants: CheckInTenantOption[];
   rooms: CheckInRoomOption[];
+  addRoomsHref: string;
 };
 
 function CheckInFields({
@@ -178,16 +180,72 @@ function CheckInDescription({
   );
 }
 
+function CheckInBody({
+  idPrefix,
+  isAnniversary,
+  atLeaseLimit,
+  tenants,
+  rooms,
+  addRoomsHref,
+  pending,
+  onSubmit,
+}: PanelProps & {
+  idPrefix: string;
+  pending: boolean;
+  onSubmit: (formData: FormData) => void;
+}) {
+  if (atLeaseLimit) {
+    return (
+      <PlanLimitNotice>
+        Batas kontrak paket Gratis sudah tercapai. Check-out atau batalkan
+        check-in menunggu bayar dulu.
+      </PlanLimitNotice>
+    );
+  }
+
+  if (tenants.length === 0) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Belum ada penyewa. Daftarkan penyewa dulu sebelum check-in.
+        </p>
+        <Button asChild className="h-11 w-full">
+          <Link href="/tenants">Ke penyewa</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (rooms.length === 0) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Tidak ada kamar kosong. Tambah kamar baru atau check-out penyewa yang
+          sudah selesai.
+        </p>
+        <Button asChild className="h-11 w-full">
+          <Link href={addRoomsHref}>Kelola kamar</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <CheckInFields
+      idPrefix={idPrefix}
+      isAnniversary={isAnniversary}
+      tenants={tenants}
+      rooms={rooms}
+      pending={pending}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
 export function LeaseCheckInSheetTrigger(props: PanelProps) {
   const [open, setOpen] = useState(false);
   const { pending, submit } = useCheckIn();
-  const {
-    isAnniversary,
-    atLeaseLimit,
-    usageLabel,
-    tenants,
-    rooms,
-  } = props;
+  const { isAnniversary, usageLabel } = props;
 
   useEffect(() => {
     function syncFromHash() {
@@ -211,9 +269,9 @@ export function LeaseCheckInSheetTrigger(props: PanelProps) {
       }}
     >
       <SheetTrigger asChild>
-        <Button type="button" className="h-10 shrink-0 gap-1.5">
+        <Button type="button" className="h-10 shrink-0 gap-1.5 px-3">
           <Plus className="size-4" />
-          Check-in
+          Tambah
         </Button>
       </SheetTrigger>
       <SheetContent
@@ -228,21 +286,12 @@ export function LeaseCheckInSheetTrigger(props: PanelProps) {
           />
         </SheetHeader>
         <div className="px-3 pb-4">
-          {atLeaseLimit ? (
-            <PlanLimitNotice>
-              Batas kontrak paket Gratis sudah tercapai. Check-out atau batalkan
-              check-in menunggu bayar dulu.
-            </PlanLimitNotice>
-          ) : (
-            <CheckInFields
-              idPrefix="lease-sheet"
-              isAnniversary={isAnniversary}
-              tenants={tenants}
-              rooms={rooms}
-              pending={pending}
-              onSubmit={(fd) => submit(fd, () => setOpen(false))}
-            />
-          )}
+          <CheckInBody
+            {...props}
+            idPrefix="lease-sheet"
+            pending={pending}
+            onSubmit={(fd) => submit(fd, () => setOpen(false))}
+          />
         </div>
       </SheetContent>
     </Sheet>
@@ -254,13 +303,7 @@ export function LeaseCheckInCard({
   ...props
 }: PanelProps & { className?: string }) {
   const { pending, submit } = useCheckIn();
-  const {
-    isAnniversary,
-    atLeaseLimit,
-    usageLabel,
-    tenants,
-    rooms,
-  } = props;
+  const { isAnniversary, usageLabel } = props;
 
   return (
     <Card id="check-in" className={className}>
@@ -275,21 +318,12 @@ export function LeaseCheckInCard({
         {usageLabel && <CardDescription>{usageLabel}</CardDescription>}
       </CardHeader>
       <CardContent>
-        {atLeaseLimit ? (
-          <PlanLimitNotice>
-            Batas kontrak paket Gratis sudah tercapai. Check-out atau batalkan
-            check-in menunggu bayar dulu.
-          </PlanLimitNotice>
-        ) : (
-          <CheckInFields
-            idPrefix="lease-card"
-            isAnniversary={isAnniversary}
-            tenants={tenants}
-            rooms={rooms}
-            pending={pending}
-            onSubmit={(fd) => submit(fd)}
-          />
-        )}
+        <CheckInBody
+          {...props}
+          idPrefix="lease-card"
+          pending={pending}
+          onSubmit={(fd) => submit(fd)}
+        />
       </CardContent>
     </Card>
   );
