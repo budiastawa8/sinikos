@@ -6,12 +6,12 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "SiniKos",
     description:
       "Kelola kos, kamar, penyewa, tagihan, dan pembayaran dalam satu tempat.",
-    start_url: "/",
+    start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: "#faf8f5",
-    theme_color: "#1f6f5b",
+    background_color: "#0d5c56",
+    theme_color: "#0d5c56",
     lang: "id",
     categories: ["business", "productivity", "finance"],
     icons: [
@@ -28,7 +28,7 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png",
+        src: "/icons/icon-maskable-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

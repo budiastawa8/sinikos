@@ -1,3 +1,4 @@
+import { AppBootSplash } from "@/components/app-boot-splash";
 import { AppShell } from "@/components/app-shell";
 import { activePlanCode, planLabel } from "@/lib/billing/plans";
 import { requireOrg } from "@/lib/tenant";
@@ -13,8 +14,11 @@ export default async function AppLayout({
   const label = planLabel(activePlanCode(organization));
 
   return (
-    <AppShell orgName={organization.name} planLabel={label}>
-      {children}
-    </AppShell>
+    <>
+      <AppBootSplash />
+      <AppShell orgName={organization.name} planLabel={label}>
+        {children}
+      </AppShell>
+    </>
   );
 }
