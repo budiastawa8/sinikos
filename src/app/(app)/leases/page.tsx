@@ -2,21 +2,12 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import { checkInAction } from "@/lib/actions/leases";
-import { formatRupiah } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PlanLimitNotice } from "@/components/plan-limit-notice";
 import { SetupNextHint } from "@/components/setup-next-hint";
 import { LeaseList } from "@/components/lease-list";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  LeaseCheckInCard,
+  LeaseCheckInSheetTrigger,
+} from "@/components/lease-checkin-panel";
 import Link from "next/link";
 
 export default async function LeasesPage() {
@@ -89,23 +80,55 @@ export default async function LeasesPage() {
     ? `/properties/${firstProperty.id}`
     : "/properties";
 
+  const hasLeases = leases.length > 0;
+  const canOfferCheckIn =
+    totalRooms > 0 && tenants.length > 0 && rooms.length > 0 && !atLeaseLimit;
+
+  const usageLabel =
+    !entitlements.active && entitlements.limits.maxActiveLeases != null
+      ? `Paket Gratis: ${entitlements.usage.activeLeases} dari ${entitlements.limits.maxActiveLeases} kontrak (aktif + menunggu bayar)`
+      : undefined;
+
+  const checkInProps = {
+    isAnniversary,
+    atLeaseLimit,
+    usageLabel,
+    tenants,
+    rooms: rooms.map((r) => ({
+      id: r.id,
+      code: r.code,
+      price: r.price,
+      propertyName: r.property.name,
+    })),
+  };
+
+  const showMobileTrigger =
+    hasLeases && (canOfferCheckIn || atLeaseLimit);
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Kontrak
-        </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
-          Check-in membuat tagihan pertama di muka. Kamar baru berstatus terisi
-          setelah tagihan itu lunas.{" "}
-          {isAnniversary
-            ? "Siklus tagihan mengikuti tanggal masuk."
-            : `Siklus kalender/prorata (tanggal serempak ${organization.billingDay}).`}{" "}
-          <Link href="/settings" className="text-primary underline">
-            Ubah di Pengaturan
-          </Link>
-          .
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Kontrak
+          </h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            Check-in membuat tagihan pertama di muka. Kamar baru berstatus terisi
+            setelah tagihan itu lunas.{" "}
+            {isAnniversary
+              ? "Siklus tagihan mengikuti tanggal masuk."
+              : `Siklus kalender/prorata (tanggal serempak ${organization.billingDay}).`}{" "}
+            <Link href="/settings" className="text-primary underline">
+              Ubah di Pengaturan
+            </Link>
+            .
+          </p>
+        </div>
+        {showMobileTrigger && (
+          <div className="xl:hidden">
+            <LeaseCheckInSheetTrigger {...checkInProps} />
+          </div>
+        )}
       </div>
 
       {totalRooms === 0 && (
@@ -126,7 +149,7 @@ export default async function LeasesPage() {
       )}
       {totalRooms > 0 &&
         tenants.length > 0 &&
-        leases.length === 0 &&
+        !hasLeases &&
         rooms.length === 0 && (
           <SetupNextHint
             title="Semua kamar sedang terpakai"
@@ -137,11 +160,11 @@ export default async function LeasesPage() {
         )}
       {totalRooms > 0 &&
         tenants.length > 0 &&
-        leases.length === 0 &&
+        !hasLeases &&
         rooms.length > 0 && (
           <SetupNextHint
             title="Langkah berikutnya: check-in"
-            body="Pilih penyewa dan kamar kosong di form Check-in baru. Tagihan pertama akan dibuat otomatis."
+            body="Pilih penyewa dan kamar kosong di form Check-in baru di bawah. Tagihan pertama akan dibuat otomatis."
             href="#check-in"
             cta="Isi form check-in"
           />
@@ -162,92 +185,12 @@ export default async function LeasesPage() {
           }))}
         />
 
-        <Card id="check-in">
-          <CardHeader>
-            <CardTitle>Check-in baru</CardTitle>
-            <CardDescription>
-              {isAnniversary
-                ? "Pilih tanggal masuk — tagihan penuh berulang di tanggal itu."
-                : "Masuk di tengah bulan: prorata harian (hari masuk tidak dihitung), lalu serempak di tanggal tagihan."}{" "}
-              Tagihan pertama wajib lunas sebelum kamar terisi.
-            </CardDescription>
-            {!entitlements.active &&
-              entitlements.limits.maxActiveLeases != null && (
-                <CardDescription>
-                  Paket Gratis: {entitlements.usage.activeLeases} dari{" "}
-                  {entitlements.limits.maxActiveLeases} kontrak (aktif + menunggu
-                  bayar)
-                </CardDescription>
-              )}
-          </CardHeader>
-          <CardContent>
-            {atLeaseLimit ? (
-              <PlanLimitNotice>
-                Batas kontrak paket Gratis sudah tercapai. Check-out atau
-                batalkan check-in menunggu bayar dulu.
-              </PlanLimitNotice>
-            ) : (
-              <form action={checkInAction} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tenantId">Penyewa</Label>
-                  <select
-                    id="tenantId"
-                    name="tenantId"
-                    required
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  >
-                    <option value="">Pilih penyewa</option>
-                    {tenants.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="roomId">Kamar tersedia</Label>
-                  <select
-                    id="roomId"
-                    name="roomId"
-                    required
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  >
-                    <option value="">Pilih kamar</option>
-                    {rooms.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.property.name} · {r.code} ({formatRupiah(r.price)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Tanggal masuk</Label>
-                  <Input id="startDate" name="startDate" type="date" required />
-                  {isAnniversary && (
-                    <p className="text-xs text-muted-foreground">
-                      Tanggal ini menjadi siklus tagihan bulanan (maks. hari ke-28
-                      untuk bulan pendek).
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="monthlyRent">Sewa / bulan</Label>
-                  <Input
-                    id="monthlyRent"
-                    name="monthlyRent"
-                    type="number"
-                    required
-                    min={1}
-                    placeholder="1500000"
-                  />
-                </div>
-                <Button type="submit" className="h-11 w-full">
-                  Buat check-in + tagihan
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
+        {(hasLeases || canOfferCheckIn || atLeaseLimit) && (
+          <LeaseCheckInCard
+            {...checkInProps}
+            className={hasLeases ? "hidden xl:block" : undefined}
+          />
+        )}
       </div>
     </div>
   );

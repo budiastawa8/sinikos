@@ -1,17 +1,11 @@
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
-import { createTenantAction } from "@/lib/actions/properties";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SetupNextHint } from "@/components/setup-next-hint";
 import { TenantList } from "@/components/tenant-list";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  TenantCreateCard,
+  TenantCreateSheetTrigger,
+} from "@/components/tenant-create-panel";
 
 export default async function TenantsPage() {
   const { organizationId } = await requireOrg();
@@ -39,15 +33,24 @@ export default async function TenantsPage() {
     }),
   ]);
 
+  const hasTenants = tenants.length > 0;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Penyewa
-        </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
-          Data penyewa dan nomor WhatsApp untuk tagihan.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Penyewa
+          </h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            Data penyewa dan nomor WhatsApp untuk tagihan.
+          </p>
+        </div>
+        {hasTenants && (
+          <div className="xl:hidden">
+            <TenantCreateSheetTrigger />
+          </div>
+        )}
       </div>
 
       {roomCount === 0 && (
@@ -58,10 +61,10 @@ export default async function TenantsPage() {
           cta="Ke properti / kamar"
         />
       )}
-      {roomCount > 0 && tenants.length === 0 && (
+      {roomCount > 0 && !hasTenants && (
         <SetupNextHint
           title="Langkah berikutnya: daftar penyewa"
-          body="Simpan nama dan nomor WhatsApp. Setelah itu Anda bisa check-in ke kamar kosong."
+          body="Simpan nama dan nomor WhatsApp di form di bawah. Setelah itu Anda bisa check-in ke kamar kosong."
           href="#tambah-penyewa"
           cta="Isi form di bawah"
         />
@@ -77,39 +80,9 @@ export default async function TenantsPage() {
           }))}
         />
 
-        <Card id="tambah-penyewa">
-          <CardHeader>
-            <CardTitle>Tambah penyewa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={createTenantAction} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama</Label>
-                <Input id="name" name="name" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Nomor WhatsApp</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  required
-                  placeholder="0812xxxxxxx"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email (opsional)</Label>
-                <Input id="email" name="email" type="email" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Catatan</Label>
-                <Input id="notes" name="notes" />
-              </div>
-              <Button type="submit" className="w-full">
-                Simpan
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <TenantCreateCard
+          className={hasTenants ? "hidden xl:block" : undefined}
+        />
       </div>
     </div>
   );
