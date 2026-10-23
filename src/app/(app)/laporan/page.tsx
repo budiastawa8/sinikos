@@ -64,7 +64,7 @@ export default async function ReportsPage() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           title="Tunggakan"
           value={formatRupiah(arrears.totalOutstanding)}
@@ -93,7 +93,7 @@ export default async function ReportsPage() {
               Tagihan belum lunas, sebagian, atau terlambat.
             </CardDescription>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
             <ExportCsvButton
               filename={`tunggakan-sinikos.csv`}
               headers={[
@@ -201,7 +201,7 @@ export default async function ReportsPage() {
               Status tiap kamar dan penyewa aktif / menunggu bayar.
             </CardDescription>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
             <ExportCsvButton
               filename={`okupansi-sinikos.csv`}
               headers={[
@@ -306,12 +306,14 @@ function Stat({
 }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="text-xl sm:text-2xl">{value}</CardTitle>
+      <CardHeader className="space-y-1 p-3 sm:p-6 sm:pb-2">
+        <CardDescription className="text-xs sm:text-sm">{title}</CardDescription>
+        <CardTitle className="text-base leading-tight break-words sm:text-2xl">
+          {value}
+        </CardTitle>
       </CardHeader>
       {hint && (
-        <CardContent className="pt-0 text-xs text-muted-foreground">
+        <CardContent className="px-3 pb-3 pt-0 text-xs text-muted-foreground sm:px-6 sm:pb-6">
           {hint}
         </CardContent>
       )}
