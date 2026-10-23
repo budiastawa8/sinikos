@@ -3,16 +3,11 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { PlanLimitNotice } from "@/components/plan-limit-notice";
-import { RoomCreateForm } from "@/components/room-create-form";
 import { RoomList } from "@/components/room-list";
+import {
+  RoomCreateCard,
+  RoomCreateSheetTrigger,
+} from "@/components/room-create-panel";
 
 export default async function PropertyDetailPage({
   params,
@@ -43,13 +38,32 @@ export default async function PropertyDetailPage({
   });
   if (!property) notFound();
 
+  const hasRooms = property.rooms.length > 0;
+  const usageLabel =
+    !entitlements.active && entitlements.limits.maxRooms != null
+      ? `Paket Gratis: ${entitlements.usage.rooms} dari ${entitlements.limits.maxRooms} kamar di seluruh bisnis`
+      : undefined;
+
+  const createProps = {
+    propertyId: property.id,
+    atRoomLimit,
+    usageLabel,
+  };
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          {property.name}
-        </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+            {property.name}
+          </h1>
+          {hasRooms && (
+            <div className="xl:hidden">
+              <RoomCreateSheetTrigger {...createProps} />
+            </div>
+          )}
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
           {property.address || "Tanpa alamat"}
         </p>
       </div>
@@ -65,27 +79,10 @@ export default async function PropertyDetailPage({
           }))}
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tambah kamar</CardTitle>
-            {!entitlements.active && entitlements.limits.maxRooms != null && (
-              <CardDescription>
-                Paket Gratis: {entitlements.usage.rooms} dari{" "}
-                {entitlements.limits.maxRooms} kamar di seluruh bisnis
-              </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent>
-            {atRoomLimit ? (
-              <PlanLimitNotice>
-                Batas kamar paket Gratis sudah tercapai. Kamar yang sudah ada
-                tetap bisa diubah statusnya.
-              </PlanLimitNotice>
-            ) : (
-              <RoomCreateForm propertyId={property.id} />
-            )}
-          </CardContent>
-        </Card>
+        <RoomCreateCard
+          {...createProps}
+          className={hasRooms ? "hidden xl:block" : undefined}
+        />
       </div>
     </div>
   );

@@ -1,13 +1,16 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { updateRoomStatusAction } from "@/lib/actions/properties";
 import { useServerAction } from "@/hooks/use-server-action";
+import { matchesSearch, normalizeSearch } from "@/lib/list-filter";
 import {
   roomOccupancyBadgeVariant,
   roomOccupancyLabel,
 } from "@/lib/labels";
 import { formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { ListSearch } from "@/components/list-search";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   Card,
@@ -114,24 +117,64 @@ function RoomActions({
 }
 
 export function RoomList({ rooms }: { rooms: RoomListItem[] }) {
+  const [query, setQuery] = useState("");
+  const q = normalizeSearch(query);
+
+  const filtered = useMemo(() => {
+    if (!q) return rooms;
+    return rooms.filter((room) =>
+      matchesSearch(
+        [
+          room.code,
+          String(room.price),
+          formatRupiah(room.price),
+          roomOccupancyLabel({
+            roomStatus: room.status,
+            leaseStatus: room.leaseStatus,
+          }),
+        ].join(" "),
+        q,
+      ),
+    );
+  }, [rooms, q]);
+
   return (
     <Card className="xl:col-span-2">
       <CardHeader className="pb-3">
-        <CardTitle>Kamar</CardTitle>
-        <CardDescription>
-          {rooms.length} kamar · Terisi/menunggu bayar mengikuti kontrak
-        </CardDescription>
+        {rooms.length > 0 ? (
+          <ListSearch
+            value={query}
+            onChange={setQuery}
+            placeholder="Cari kode, harga, status…"
+          >
+            <CardTitle>Kamar</CardTitle>
+            <CardDescription>
+              {q
+                ? `${filtered.length} dari ${rooms.length} kamar`
+                : `${rooms.length} kamar · Terisi/menunggu bayar mengikuti kontrak`}
+            </CardDescription>
+          </ListSearch>
+        ) : (
+          <div className="space-y-1.5">
+            <CardTitle>Kamar</CardTitle>
+            <CardDescription>0 kamar</CardDescription>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3 p-3 pt-0 sm:p-6 sm:pt-0">
         {rooms.length === 0 ? (
           <p className="px-1 py-6 text-sm text-muted-foreground">
-            Belum ada kamar. Isi form &quot;Tambah kamar&quot; — contoh kode: A1,
-            harga sewa bulanan.
+            Belum ada kamar. Pakai tombol Tambah atau form &quot;Tambah
+            kamar&quot;.
+          </p>
+        ) : filtered.length === 0 ? (
+          <p className="px-1 py-6 text-sm text-muted-foreground">
+            Tidak ada kamar yang cocok dengan &quot;{query.trim()}&quot;.
           </p>
         ) : (
           <>
             <ul className="space-y-2 md:hidden">
-              {rooms.map((room) => (
+              {filtered.map((room) => (
                 <li
                   key={room.id}
                   className="rounded-lg border bg-card px-3 py-2.5"
@@ -176,7 +219,7 @@ export function RoomList({ rooms }: { rooms: RoomListItem[] }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rooms.map((room) => (
+                  {filtered.map((room) => (
                     <TableRow key={room.id}>
                       <TableCell className="font-medium">{room.code}</TableCell>
                       <TableCell>{formatRupiah(room.price)}</TableCell>
