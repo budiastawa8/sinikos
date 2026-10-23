@@ -92,6 +92,37 @@ export async function createTenantAction(formData: FormData) {
   revalidatePath("/tenants");
 }
 
+const tenantUpdateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(2, "Nama minimal 2 karakter"),
+  phone: z.string().trim().min(9, "Nomor WhatsApp wajib"),
+});
+
+export async function updateTenantAction(formData: FormData) {
+  const { organizationId } = await requireOrg();
+  const parsed = tenantUpdateSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
+
+  const result = await db.tenant.updateMany({
+    where: { id: parsed.data.id, organizationId },
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+    },
+  });
+  if (result.count === 0) throw new Error("Penyewa tidak ditemukan");
+
+  revalidatePath("/tenants");
+  revalidatePath("/leases");
+  revalidatePath("/invoices");
+  revalidatePath("/dashboard");
+  revalidatePath("/laporan");
+}
+
 export async function deleteTenantAction(formData: FormData) {
   const { organizationId } = await requireOrg();
   const id = String(formData.get("id") ?? "");

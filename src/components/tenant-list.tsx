@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ListSearch } from "@/components/list-search";
+import { TenantEditButton } from "@/components/tenant-edit-button";
 
 export type TenantListItem = {
   id: string;
@@ -88,17 +89,25 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
                       {t.roomCode ? ` · Kamar ${t.roomCode}` : " · Belum check-in"}
                     </p>
                   </div>
-                  <form action={deleteTenantAction} className="mt-2">
-                    <input type="hidden" name="id" value={t.id} />
-                    <Button
-                      type="submit"
-                      variant="outline"
-                      size="sm"
-                      className="h-10 w-full"
-                    >
-                      Hapus
-                    </Button>
-                  </form>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <TenantEditButton
+                      id={t.id}
+                      name={t.name}
+                      phone={t.phone}
+                      fullWidth
+                    />
+                    <form action={deleteTenantAction}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        size="sm"
+                        className="h-10 w-full"
+                      >
+                        Hapus
+                      </Button>
+                    </form>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -120,12 +129,19 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
                       <TableCell>{t.phone}</TableCell>
                       <TableCell>{t.roomCode ?? "-"}</TableCell>
                       <TableCell>
-                        <form action={deleteTenantAction}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <Button type="submit" size="sm" variant="ghost">
-                            Hapus
-                          </Button>
-                        </form>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <TenantEditButton
+                            id={t.id}
+                            name={t.name}
+                            phone={t.phone}
+                          />
+                          <form action={deleteTenantAction}>
+                            <input type="hidden" name="id" value={t.id} />
+                            <Button type="submit" size="sm" variant="ghost">
+                              Hapus
+                            </Button>
+                          </form>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
