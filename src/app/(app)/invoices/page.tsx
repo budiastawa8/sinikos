@@ -83,49 +83,50 @@ export default async function InvoicesPage() {
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Tagihan
           </h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Melunasi tagihan check-in pertama akan mengaktifkan kontrak dan
-            menandai kamar terisi.{" "}
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+            Catat bayar atau kirim WhatsApp dari tombol Aksi.
             {pro
-              ? "Generate tagihan, lalu pakai tombol Aksi untuk catat bayar, WhatsApp, atau link Midtrans."
-              : "Generate tagihan, catat bayar, atau kirim WhatsApp manual (kuota terbatas). Link Midtrans dan reminder otomatis ada di Pro."}{" "}
+              ? " Link Midtrans opsional."
+              : " Link Midtrans & reminder otomatis di Pro."}{" "}
+            <span className="hidden sm:inline">
+              Melunasi tagihan check-in pertama mengaktifkan kontrak.{" "}
+            </span>
             {!pro && (
-              <Link href="/billing" className="font-medium text-primary underline">
-                Lihat langganan.
+              <Link
+                href="/billing"
+                className="font-medium text-primary underline"
+              >
+                Lihat langganan
               </Link>
             )}
             {pro && !midtransReady && (
               <>
                 {" "}
-                Midtrans belum diaktifkan — tidak wajib; isi di Pengaturan atau{" "}
                 <Link
                   href="/panduan#midtrans"
                   className="font-medium text-primary underline"
                 >
-                  baca panduan
+                  Setup Midtrans
                 </Link>
-                .
               </>
             )}
             {pro && midtransReady && organization.midtransIsProduction && (
               <>
                 {" "}
-                Mode Midtrans:{" "}
-                <span className="font-medium text-amber-800">Production</span>{" "}
-                (uang sungguhan).{" "}
+                <span className="font-medium text-amber-800">Production</span>
+                .{" "}
                 <Link
                   href="/panduan#production"
                   className="font-medium text-primary underline"
                 >
-                  Panduan Production
+                  Panduan
                 </Link>
-                .
               </>
             )}
           </p>
@@ -173,7 +174,7 @@ export default async function InvoicesPage() {
       )}
 
       <Card id="daftar-tagihan">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle>Semua tagihan</CardTitle>
           <CardDescription>
             {invoices.length}
@@ -181,69 +182,64 @@ export default async function InvoicesPage() {
             {invoices.length >= 60 ? " (maks. 60 ditampilkan)" : ""}
           </CardDescription>
         </CardHeader>
-        <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Periode</TableHead>
-                <TableHead>Penyewa</TableHead>
-                <TableHead>Kamar</TableHead>
-                <TableHead>Jumlah</TableHead>
-                <TableHead>Terbayar</TableHead>
-                <TableHead>Jatuh tempo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>WA</TableHead>
-                <TableHead className="w-[6.5rem]">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-muted-foreground">
-                    {leaseCount === 0
-                      ? "Belum ada tagihan. Check-in penyewa dulu di menu Kontrak."
-                      : 'Belum ada tagihan. Klik "Generate tagihan bulan ini".'}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                invoices.map((inv) => {
-                  const lastWa = inv.whatsappLogs[0];
+        <CardContent className="space-y-3 p-3 pt-0 sm:p-6 sm:pt-0">
+          {invoices.length === 0 ? (
+            <p className="px-1 py-6 text-sm text-muted-foreground">
+              {leaseCount === 0
+                ? "Belum ada tagihan. Check-in penyewa dulu di menu Kontrak."
+                : 'Belum ada tagihan. Klik "Generate tagihan bulan ini".'}
+            </p>
+          ) : (
+            <>
+              {/* Mobile: kartu */}
+              <ul className="space-y-3 md:hidden">
+                {invoices.map((inv) => {
                   const periodLabel = `${MONTHS_ID[inv.periodMonth - 1]} ${inv.periodYear}`;
+                  const outstanding = Math.max(0, inv.amount - inv.amountPaid);
+                  const lastWa = inv.whatsappLogs[0];
+                  const unpaid = inv.status !== "PAID";
+
                   return (
-                    <TableRow key={inv.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {periodLabel}
-                      </TableCell>
-                      <TableCell>{inv.lease.tenant.name}</TableCell>
-                      <TableCell>
-                        {inv.lease.room.property.name} · {inv.lease.room.code}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatRupiah(inv.amount)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatRupiah(inv.amountPaid)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatDate(inv.dueDate)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={invoiceStatusBadgeVariant(inv.status)}>
+                    <li
+                      key={inv.id}
+                      className="rounded-xl border bg-card px-3 py-3 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium leading-tight">
+                            {inv.lease.tenant.name}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {inv.lease.room.property.name} ·{" "}
+                            {inv.lease.room.code} · {periodLabel}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={invoiceStatusBadgeVariant(inv.status)}
+                          className="shrink-0"
+                        >
                           {invoiceStatusLabel(inv.status)}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {lastWa ? (
-                          <Badge
-                            variant={whatsappStatusBadgeVariant(lastWa.status)}
-                          >
-                            {whatsappStatusLabel(lastWa.status)}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
+                      </div>
+
+                      <div className="mt-3 flex items-end justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            {unpaid ? "Sisa bayar" : "Lunas"}
+                          </p>
+                          <p className="text-lg font-semibold tabular-nums leading-tight">
+                            {formatRupiah(unpaid ? outstanding : inv.amount)}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            Jatuh tempo {formatDate(inv.dueDate)}
+                            {lastWa
+                              ? ` · WA ${whatsappStatusLabel(lastWa.status)}`
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
                         <InvoiceRowActions
                           invoiceId={inv.id}
                           tenantName={inv.lease.tenant.name}
@@ -257,14 +253,97 @@ export default async function InvoicesPage() {
                           canWhatsApp
                           midtransReady={midtransReady}
                           waDisabled={Boolean(waQuota.exhausted)}
+                          fullWidth
                         />
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </li>
                   );
-                })
-              )}
-            </TableBody>
-          </Table>
+                })}
+              </ul>
+
+              {/* Desktop: tabel */}
+              <div className="-mx-2 hidden overflow-x-auto md:mx-0 md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Periode</TableHead>
+                      <TableHead>Penyewa</TableHead>
+                      <TableHead>Kamar</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Terbayar</TableHead>
+                      <TableHead>Jatuh tempo</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>WA</TableHead>
+                      <TableHead className="w-[6.5rem]">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((inv) => {
+                      const lastWa = inv.whatsappLogs[0];
+                      const periodLabel = `${MONTHS_ID[inv.periodMonth - 1]} ${inv.periodYear}`;
+                      return (
+                        <TableRow key={inv.id}>
+                          <TableCell className="whitespace-nowrap">
+                            {periodLabel}
+                          </TableCell>
+                          <TableCell>{inv.lease.tenant.name}</TableCell>
+                          <TableCell>
+                            {inv.lease.room.property.name} ·{" "}
+                            {inv.lease.room.code}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatRupiah(inv.amount)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatRupiah(inv.amountPaid)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatDate(inv.dueDate)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={invoiceStatusBadgeVariant(inv.status)}
+                            >
+                              {invoiceStatusLabel(inv.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {lastWa ? (
+                              <Badge
+                                variant={whatsappStatusBadgeVariant(
+                                  lastWa.status,
+                                )}
+                              >
+                                {whatsappStatusLabel(lastWa.status)}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <InvoiceRowActions
+                              invoiceId={inv.id}
+                              tenantName={inv.lease.tenant.name}
+                              periodLabel={periodLabel}
+                              amount={inv.amount}
+                              amountPaid={inv.amountPaid}
+                              status={inv.status}
+                              paymentUrl={inv.paymentUrl}
+                              midtransOrderId={inv.midtransOrderId}
+                              pro={pro}
+                              canWhatsApp
+                              midtransReady={midtransReady}
+                              waDisabled={Boolean(waQuota.exhausted)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -37,6 +37,8 @@ type Props = {
   canWhatsApp?: boolean;
   midtransReady: boolean;
   waDisabled?: boolean;
+  /** Lebar penuh untuk kartu mobile. */
+  fullWidth?: boolean;
 };
 
 export function InvoiceRowActions({
@@ -52,6 +54,7 @@ export function InvoiceRowActions({
   canWhatsApp = pro,
   midtransReady,
   waDisabled,
+  fullWidth,
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -115,7 +118,11 @@ export function InvoiceRowActions({
           type="button"
           variant="outline"
           size="sm"
-          className="h-10 gap-1.5 px-3"
+          className={
+            fullWidth
+              ? "h-11 w-full gap-1.5"
+              : "h-10 gap-1.5 px-3"
+          }
           aria-label={`Aksi tagihan ${tenantName}`}
         >
           <MoreHorizontal className="size-4" />
@@ -145,6 +152,26 @@ export function InvoiceRowActions({
                 hint="Cash / transfer dicatat di SiniKos"
               />
             )}
+            {canWhatsApp && (
+              <ActionRow
+                disabled={pending || waDisabled}
+                onClick={() =>
+                  run("Kirim WA", async () => {
+                    const fd = new FormData();
+                    fd.set("invoiceId", invoiceId);
+                    return resendWhatsAppAction(fd);
+                  })
+                }
+                label="Kirim WhatsApp"
+                hint={
+                  waDisabled
+                    ? "Kuota WhatsApp bulan ini habis"
+                    : !pro
+                      ? "Paket Gratis: kirim manual (kuota terbatas)"
+                      : undefined
+                }
+              />
+            )}
             {unpaid && pro && midtransReady && (
               <ActionRow
                 disabled={pending}
@@ -170,7 +197,11 @@ export function InvoiceRowActions({
                     },
                   )
                 }
-                label={paymentUrl ? "Buka link bayar Midtrans" : "Buat link bayar Midtrans"}
+                label={
+                  paymentUrl
+                    ? "Buka link bayar Midtrans"
+                    : "Buat link bayar Midtrans"
+                }
               />
             )}
             {unpaid && midtransReady && midtransOrderId && (
@@ -184,26 +215,6 @@ export function InvoiceRowActions({
                   })
                 }
                 label="Cek status bayar Midtrans"
-              />
-            )}
-            {canWhatsApp && (
-              <ActionRow
-                disabled={pending || waDisabled}
-                onClick={() =>
-                  run("Kirim WA", async () => {
-                    const fd = new FormData();
-                    fd.set("invoiceId", invoiceId);
-                    return resendWhatsAppAction(fd);
-                  })
-                }
-                label="Kirim WhatsApp"
-                hint={
-                  waDisabled
-                    ? "Kuota WhatsApp bulan ini habis"
-                    : !pro
-                      ? "Paket Gratis: kirim manual (kuota terbatas)"
-                      : undefined
-                }
               />
             )}
             {!unpaid && !canWhatsApp && (
