@@ -19,7 +19,7 @@ export default async function LeasesPage() {
   );
   const isAnniversary = organization.billingCycle === "ANNIVERSARY";
 
-  const [leases, busyRoomIds, tenants, totalRooms, firstProperty] =
+  const [leases, busyRoomIds, tenants, totalRooms, firstProperty, openRooms] =
     await Promise.all([
       db.lease.findMany({
         where: { organizationId },
@@ -58,27 +58,25 @@ export default async function LeasesPage() {
         orderBy: { createdAt: "asc" },
         select: { id: true },
       }),
+      // Parallel dengan busyRoomIds; filter di memori (hindari round-trip kedua).
+      db.room.findMany({
+        where: {
+          property: { organizationId },
+          status: { not: "MAINTENANCE" },
+        },
+        orderBy: [{ property: { name: "asc" } }, { code: "asc" }],
+        select: {
+          id: true,
+          code: true,
+          price: true,
+          property: { select: { name: true } },
+        },
+      }),
     ]);
 
-  const busyIds = busyRoomIds.map((r) => r.roomId);
-  // Kamar bisa check-in = tidak punya kontrak ACTIVE/PENDING.
-  // Jangan andalkan RoomStatus saja: saat check-in menunggu bayar status
-  // kamar masih AVAILABLE ("Kosong") di Properti, tapi kamar sudah dipegang.
-  const rooms = await db.room.findMany({
-    where: {
-      property: { organizationId },
-      status: { not: "MAINTENANCE" },
-      ...(busyIds.length > 0 ? { id: { notIn: busyIds } } : {}),
-    },
-    orderBy: [{ property: { name: "asc" } }, { code: "asc" }],
-    select: {
-      id: true,
-      code: true,
-      price: true,
-      property: { select: { name: true } },
-    },
-  });
-  const busyRoomCount = busyIds.length;
+  const busyIds = new Set(busyRoomIds.map((r) => r.roomId));
+  const rooms = openRooms.filter((r) => !busyIds.has(r.id));
+  const busyRoomCount = busyIds.size;
 
   const addRoomsHref = firstProperty
     ? `/properties/${firstProperty.id}`

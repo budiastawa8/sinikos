@@ -33,60 +33,72 @@ export default async function DashboardPage() {
   const { organizationId, organization } = await requireOrg();
   const pro = isProActive(organization);
 
-  const [setup, occupied, busyRoomIds, unpaid, overdue, recentInvoices, waQuota] =
-    await Promise.all([
-      getSetupProgress(organizationId),
-      // Terisi = benar-benar berkontrak aktif (bukan RoomStatus manual).
-      db.lease.count({
-        where: { organizationId, status: "ACTIVE" },
-      }),
-      db.lease.findMany({
-        where: {
-          organizationId,
-          status: { in: ["ACTIVE", "PENDING"] },
-        },
-        select: { roomId: true },
-        distinct: ["roomId"],
-      }),
-      db.invoice.count({
-        where: {
-          organizationId,
-          status: { in: ["UNPAID", "PARTIAL"] },
-        },
-      }),
-      db.invoice.count({
-        where: { organizationId, status: "OVERDUE" },
-      }),
-      db.invoice.findMany({
-        where: { organizationId },
-        take: 8,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          amount: true,
-          dueDate: true,
-          status: true,
-          lease: {
-            select: {
-              tenant: { select: { name: true } },
-              room: { select: { code: true } },
-            },
+  const [
+    setup,
+    occupied,
+    busyRoomIds,
+    openRooms,
+    unpaidInvoiceGroups,
+    recentInvoices,
+    waQuota,
+  ] = await Promise.all([
+    getSetupProgress(organizationId),
+    // Terisi = benar-benar berkontrak aktif (bukan RoomStatus manual).
+    db.lease.count({
+      where: { organizationId, status: "ACTIVE" },
+    }),
+    db.lease.findMany({
+      where: {
+        organizationId,
+        status: { in: ["ACTIVE", "PENDING"] },
+      },
+      select: { roomId: true },
+      distinct: ["roomId"],
+    }),
+    // Kandidat kosong (filter busy di memori — hindari round-trip kedua).
+    db.room.findMany({
+      where: {
+        property: { organizationId },
+        status: { not: "MAINTENANCE" },
+      },
+      select: { id: true },
+    }),
+    db.invoice.groupBy({
+      by: ["status"],
+      where: {
+        organizationId,
+        status: { in: ["UNPAID", "PARTIAL", "OVERDUE"] },
+      },
+      _count: { _all: true },
+    }),
+    db.invoice.findMany({
+      where: { organizationId },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        amount: true,
+        dueDate: true,
+        status: true,
+        lease: {
+          select: {
+            tenant: { select: { name: true } },
+            room: { select: { code: true } },
           },
         },
-      }),
-      getWhatsAppQuotaUsage(organizationId),
-    ]);
+      },
+    }),
+    getWhatsAppQuotaUsage(organizationId),
+  ]);
 
   const rooms = setup.counts.rooms;
-  const busyIds = busyRoomIds.map((r) => r.roomId);
-  // Kosong = bisa check-in: tanpa kontrak aktif/pending, bukan perawatan.
-  const available = await db.room.count({
-    where: {
-      property: { organizationId },
-      status: { not: "MAINTENANCE" },
-      ...(busyIds.length > 0 ? { id: { notIn: busyIds } } : {}),
-    },
-  });
+  const busyIds = new Set(busyRoomIds.map((r) => r.roomId));
+  const available = openRooms.filter((r) => !busyIds.has(r.id)).length;
+  const unpaid = unpaidInvoiceGroups
+    .filter((g) => g.status === "UNPAID" || g.status === "PARTIAL")
+    .reduce((sum, g) => sum + g._count._all, 0);
+  const overdue =
+    unpaidInvoiceGroups.find((g) => g.status === "OVERDUE")?._count._all ?? 0;
   const next = setup.next;
 
   return (

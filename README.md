@@ -18,7 +18,7 @@ SaaS multi-tenant untuk manajemen kos (pemilik/pengelola): properti, kamar, peny
 cp .env.example .env
 ```
 
-2. Isi `DATABASE_URL` (Neon), `AUTH_SECRET`, dan opsional WhatsApp (`WHATSAPP_PROVIDER` + kredensial provider) / `CRON_SECRET`. Default WhatsApp: Fonnte (`FONNTE_TOKEN`). Untuk menerima pembayaran langganan, isi `PLATFORM_MIDTRANS_SERVER_KEY` (Sandbox: `SB-Mid-server-...`) dan biarkan `PLATFORM_MIDTRANS_IS_PRODUCTION=false` sampai uji Production.
+2. Isi `DATABASE_URL` (Neon **pooled** untuk runtime), `DIRECT_URL` (Neon **direct** untuk migrasi; lokal boleh sama dengan `DATABASE_URL`), `AUTH_SECRET`, dan opsional WhatsApp (`WHATSAPP_PROVIDER` + kredensial provider) / `CRON_SECRET`. Default WhatsApp: Fonnte (`FONNTE_TOKEN`). Untuk menerima pembayaran langganan, isi `PLATFORM_MIDTRANS_SERVER_KEY` (Sandbox: `SB-Mid-server-...`) dan biarkan `PLATFORM_MIDTRANS_IS_PRODUCTION=false` sampai uji Production.
 
 3. Install & migrasi:
 
@@ -35,12 +35,13 @@ Buka [http://localhost:3000](http://localhost:3000).
 ## Deploy Vercel
 
 1. Push repo, import ke Vercel.
-2. Set env: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `WHATSAPP_PROVIDER` (+ `FONNTE_TOKEN` atau kredensial Meta/custom), `CRON_SECRET`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+2. Set env: `DATABASE_URL` (Neon pooled), `DIRECT_URL` (Neon direct; boleh sama di lokal), `AUTH_SECRET`, `AUTH_URL`, `WHATSAPP_PROVIDER` (+ `FONNTE_TOKEN` atau kredensial Meta/custom), `CRON_SECRET`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
 3. Build memakai `prisma generate` (sudah di script `build`).
-4. Jalankan migrasi: `npx prisma migrate deploy`.
+4. Jalankan migrasi: `npx prisma migrate deploy` (memakai `DIRECT_URL`).
 5. Cron: `vercel.json` → `/api/cron/billing` (Authorization Bearer `CRON_SECRET`).
 6. Tiap pemilik kos: di Midtrans mereka, Notification URL = `https://<domain>/api/payments/midtrans/notification`.
 7. Akun Midtrans **platform** (langganan): Notification URL = `https://<domain>/api/payments/midtrans/subscription`.
+8. (Opsional) Kurangi cold-start Neon: ping `GET /api/cron/warmup` tiap ~5 menit dari UptimeRobot / cron eksternal dengan header `Authorization: Bearer $CRON_SECRET`. Vercel Hobby hanya cron harian — jangan andalkan `vercel.json` untuk interval pendek. Pertimbangkan Neon compute yang tidak scale-to-zero jika traffic produksi.
 
 ## Paket langganan
 
@@ -74,7 +75,8 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 
 - **Vercel → Deployments:** pastikan build hijau setelah push.
 - **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
-- Env penting: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_FREE_MONTHLY_QUOTA`, `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Env penting: `DATABASE_URL` (pooled), `DIRECT_URL` (direct), `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_FREE_MONTHLY_QUOTA`, `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Performa DB: `requireOrg` di-cache per request; Dashboard/Kontrak menghindari query berantai; warm-up opsional di `/api/cron/warmup`.
 - WhatsApp provider: `fonnte` (default), `meta` (Cloud API + opsional template), `custom` (`WHATSAPP_GATEWAY_URL` POST `{phone,message}`).
 - Langganan platform: biarkan Sandbox sampai siap; Production = uang sungguhan + Notification URL `/api/payments/midtrans/subscription`.
 - Sewa (model B): tiap pemilik mengatur Midtrans sendiri; support = arahkan ke **Panduan** in-app.
