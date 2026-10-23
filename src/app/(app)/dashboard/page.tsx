@@ -33,11 +33,20 @@ export default async function DashboardPage() {
   const { organizationId, organization } = await requireOrg();
   const pro = isProActive(organization);
 
-  const [setup, occupied, unpaid, overdue, recentInvoices, waQuota] =
+  const [setup, occupied, busyRoomIds, unpaid, overdue, recentInvoices, waQuota] =
     await Promise.all([
       getSetupProgress(organizationId),
-      db.room.count({
-        where: { property: { organizationId }, status: "OCCUPIED" },
+      // Terisi = benar-benar berkontrak aktif (bukan RoomStatus manual).
+      db.lease.count({
+        where: { organizationId, status: "ACTIVE" },
+      }),
+      db.lease.findMany({
+        where: {
+          organizationId,
+          status: { in: ["ACTIVE", "PENDING"] },
+        },
+        select: { roomId: true },
+        distinct: ["roomId"],
       }),
       db.invoice.count({
         where: {
@@ -69,7 +78,15 @@ export default async function DashboardPage() {
     ]);
 
   const rooms = setup.counts.rooms;
-  const available = rooms - occupied;
+  const busyIds = busyRoomIds.map((r) => r.roomId);
+  // Kosong = bisa check-in: tanpa kontrak aktif/pending, bukan perawatan.
+  const available = await db.room.count({
+    where: {
+      property: { organizationId },
+      status: { not: "MAINTENANCE" },
+      ...(busyIds.length > 0 ? { id: { notIn: busyIds } } : {}),
+    },
+  });
   const next = setup.next;
 
   return (

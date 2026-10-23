@@ -39,6 +39,9 @@ function RoomStatusForm({
   status: string;
   fullWidth?: boolean;
 }) {
+  const current =
+    status === "MAINTENANCE" ? "MAINTENANCE" : "AVAILABLE";
+
   return (
     <form
       action={updateRoomStatusAction}
@@ -51,12 +54,11 @@ function RoomStatusForm({
       <input type="hidden" name="roomId" value={roomId} />
       <select
         name="status"
-        defaultValue={status}
+        defaultValue={current}
         aria-label="Status kamar"
         className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm"
       >
         <option value="AVAILABLE">Kosong</option>
-        <option value="OCCUPIED">Terisi</option>
         <option value="MAINTENANCE">Perawatan</option>
       </select>
       <Button
@@ -71,12 +73,46 @@ function RoomStatusForm({
   );
 }
 
+function RoomActions({
+  room,
+  fullWidth,
+}: {
+  room: RoomListItem;
+  fullWidth?: boolean;
+}) {
+  if (room.leaseStatus === "ACTIVE" || room.leaseStatus === "PENDING") {
+    return (
+      <p
+        className={
+          fullWidth
+            ? "text-xs text-muted-foreground"
+            : "text-right text-xs text-muted-foreground"
+        }
+      >
+        {room.leaseStatus === "PENDING"
+          ? "Dikunci kontrak menunggu bayar — ubah di Kontrak."
+          : "Dikunci kontrak aktif — ubah lewat check-out."}
+      </p>
+    );
+  }
+
+  return (
+    <RoomStatusForm
+      roomId={room.id}
+      status={room.status}
+      fullWidth={fullWidth}
+    />
+  );
+}
+
 export function RoomList({ rooms }: { rooms: RoomListItem[] }) {
   return (
     <Card className="xl:col-span-2">
       <CardHeader className="pb-3">
         <CardTitle>Kamar</CardTitle>
-        <CardDescription>{rooms.length} kamar</CardDescription>
+        <CardDescription>
+          {rooms.length} kamar · Terisi/menunggu bayar mengikuti kontrak
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 p-3 pt-0 sm:p-6 sm:pt-0">
         {rooms.length === 0 ? (
@@ -115,11 +151,7 @@ export function RoomList({ rooms }: { rooms: RoomListItem[] }) {
                     </Badge>
                   </div>
                   <div className="mt-2">
-                    <RoomStatusForm
-                      roomId={room.id}
-                      status={room.status}
-                      fullWidth
-                    />
+                    <RoomActions room={room} fullWidth />
                   </div>
                 </li>
               ))}
@@ -154,10 +186,7 @@ export function RoomList({ rooms }: { rooms: RoomListItem[] }) {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <RoomStatusForm
-                          roomId={room.id}
-                          status={room.status}
-                        />
+                        <RoomActions room={room} />
                       </TableCell>
                     </TableRow>
                   ))}

@@ -48,15 +48,34 @@ export async function createRoomAction(formData: FormData) {
 export async function updateRoomStatusAction(formData: FormData) {
   const { organizationId } = await requireOrg();
   const roomId = String(formData.get("roomId") ?? "");
-  const status = String(formData.get("status") ?? "") as
-    | "AVAILABLE"
-    | "OCCUPIED"
-    | "MAINTENANCE";
+  const status = String(formData.get("status") ?? "");
+
+  // Terisi/kosong dari kontrak (check-in / check-out). Manual hanya
+  // Kosong ↔ Perawatan untuk kamar tanpa kontrak aktif/menunggu bayar.
+  if (status !== "AVAILABLE" && status !== "MAINTENANCE") {
+    throw new Error("Status tidak valid");
+  }
 
   const room = await db.room.findFirst({
     where: { id: roomId, property: { organizationId } },
   });
   if (!room) throw new Error("Kamar tidak ditemukan");
+
+  const busyLease = await db.lease.findFirst({
+    where: {
+      roomId,
+      organizationId,
+      status: { in: ["ACTIVE", "PENDING"] },
+    },
+    select: { id: true, status: true },
+  });
+  if (busyLease) {
+    throw new Error(
+      busyLease.status === "PENDING"
+        ? "Kamar menunggu pelunasan check-in. Lunasi atau batalkan kontrak dulu."
+        : "Kamar masih dalam kontrak aktif. Ubah lewat check-out di Kontrak.",
+    );
+  }
 
   await db.room.update({ where: { id: roomId }, data: { status } });
   revalidatePath(`/properties/${room.propertyId}`);
