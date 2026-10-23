@@ -41,7 +41,7 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
 
   return (
     <Card className="xl:col-span-2">
-      <CardHeader>
+      <CardHeader className="pb-3">
         {tenants.length > 0 ? (
           <ListSearch
             value={query}
@@ -62,48 +62,78 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
           </div>
         )}
       </CardHeader>
-      <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead>WhatsApp</TableHead>
-              <TableHead>Kamar aktif</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tenants.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-muted-foreground">
-                  Belum ada penyewa. Pakai form &quot;Tambah penyewa&quot;.
-                </TableCell>
-              </TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-muted-foreground">
-                  Tidak ada penyewa yang cocok dengan &quot;{query.trim()}&quot;.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="font-medium">{t.name}</TableCell>
-                  <TableCell>{t.phone}</TableCell>
-                  <TableCell>{t.roomCode ?? "-"}</TableCell>
-                  <TableCell>
-                    <form action={deleteTenantAction}>
-                      <input type="hidden" name="id" value={t.id} />
-                      <Button type="submit" size="sm" variant="ghost">
-                        Hapus
-                      </Button>
-                    </form>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <CardContent className="space-y-3 p-3 pt-0 sm:p-6 sm:pt-0">
+        {tenants.length === 0 ? (
+          <p className="px-1 py-6 text-sm text-muted-foreground">
+            Belum ada penyewa. Pakai form &quot;Tambah penyewa&quot;.
+          </p>
+        ) : filtered.length === 0 ? (
+          <p className="px-1 py-6 text-sm text-muted-foreground">
+            Tidak ada penyewa yang cocok dengan &quot;{query.trim()}&quot;.
+          </p>
+        ) : (
+          <>
+            <ul className="space-y-2 md:hidden">
+              {filtered.map((t) => (
+                <li
+                  key={t.id}
+                  className="rounded-lg border bg-card px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium leading-tight">
+                      {t.name}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {t.phone}
+                      {t.roomCode ? ` · Kamar ${t.roomCode}` : " · Belum check-in"}
+                    </p>
+                  </div>
+                  <form action={deleteTenantAction} className="mt-2">
+                    <input type="hidden" name="id" value={t.id} />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      size="sm"
+                      className="h-10 w-full"
+                    >
+                      Hapus
+                    </Button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+
+            <div className="-mx-2 hidden overflow-x-auto md:mx-0 md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>WhatsApp</TableHead>
+                    <TableHead>Kamar aktif</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell className="font-medium">{t.name}</TableCell>
+                      <TableCell>{t.phone}</TableCell>
+                      <TableCell>{t.roomCode ?? "-"}</TableCell>
+                      <TableCell>
+                        <form action={deleteTenantAction}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <Button type="submit" size="sm" variant="ghost">
+                            Hapus
+                          </Button>
+                        </form>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
