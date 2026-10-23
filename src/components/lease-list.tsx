@@ -142,13 +142,16 @@ export function LeaseList({
                     </p>
                   </div>
 
-                  <div className="mt-2 flex flex-col gap-2">
+                  <div className="mt-2 flex flex-row gap-2">
                     {lease.status === "PENDING" && (
                       <>
-                        <Button asChild size="sm" className="h-10 w-full">
-                          <Link href="/invoices">Lunasin tagihan</Link>
+                        <Button asChild size="sm" className="h-10 min-w-0 flex-1">
+                          <Link href="/invoices">Lunasin</Link>
                         </Button>
-                        <form action={cancelPendingLeaseAction}>
+                        <form
+                          action={cancelPendingLeaseAction}
+                          className="min-w-0 flex-1"
+                        >
                           <input
                             type="hidden"
                             name="leaseId"
@@ -166,7 +169,7 @@ export function LeaseList({
                       </>
                     )}
                     {lease.status === "ACTIVE" && (
-                      <form action={checkOutAction}>
+                      <form action={checkOutAction} className="min-w-0 flex-1">
                         <input type="hidden" name="leaseId" value={lease.id} />
                         <Button
                           type="submit"
@@ -217,11 +220,11 @@ export function LeaseList({
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="flex flex-row flex-wrap items-center justify-end gap-2">
                           {lease.status === "PENDING" && (
                             <>
                               <Button asChild size="sm" variant="default">
-                                <Link href="/invoices">Lunasin tagihan</Link>
+                                <Link href="/invoices">Lunasin</Link>
                               </Button>
                               <form action={cancelPendingLeaseAction}>
                                 <input

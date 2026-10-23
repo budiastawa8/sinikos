@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import {
   createPaymentLinkAction,
@@ -10,7 +9,7 @@ import {
   resendWhatsAppAction,
   syncMidtransStatusAction,
 } from "@/lib/actions/invoices";
-import { formatRupiah } from "@/lib/utils";
+import { cn, formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +36,7 @@ type Props = {
   canWhatsApp?: boolean;
   midtransReady: boolean;
   waDisabled?: boolean;
-  /** Lebar penuh untuk kartu mobile. */
+  /** Lebar penuh untuk kartu mobile (legacy; pemicu tetap bergaya teks). */
   fullWidth?: boolean;
 };
 
@@ -114,18 +113,18 @@ export function InvoiceRowActions({
       }}
     >
       <SheetTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="outline"
-          size="sm"
-          className={
-            fullWidth ? "h-10 w-full gap-1.5" : "h-10 gap-1.5 px-3"
-          }
+          className={cn(
+            "inline-flex items-center text-inherit underline-offset-2 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            fullWidth
+              ? "h-10 w-full justify-end text-sm text-muted-foreground"
+              : "text-muted-foreground",
+          )}
           aria-label={`Aksi tagihan ${tenantName}`}
         >
-          <MoreHorizontal className="size-4" />
           Aksi
-        </Button>
+        </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="gap-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <SheetHeader className="pb-3">
