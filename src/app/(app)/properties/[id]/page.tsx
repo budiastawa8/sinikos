@@ -8,8 +8,8 @@ import {
   updateRoomStatusAction,
 } from "@/lib/actions/properties";
 import {
-  roomStatusBadgeVariant,
-  roomStatusLabel,
+  roomOccupancyBadgeVariant,
+  roomOccupancyLabel,
 } from "@/lib/labels";
 import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,18 @@ export default async function PropertyDetailPage({
   );
   const property = await db.property.findFirst({
     where: { id, organizationId },
-    include: { rooms: { orderBy: { code: "asc" } } },
+    include: {
+      rooms: {
+        orderBy: { code: "asc" },
+        include: {
+          leases: {
+            where: { status: { in: ["ACTIVE", "PENDING"] } },
+            take: 1,
+            select: { status: true },
+          },
+        },
+      },
+    },
   });
   if (!property) notFound();
 
@@ -87,13 +98,23 @@ export default async function PropertyDetailPage({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  property.rooms.map((room) => (
+                  property.rooms.map((room) => {
+                    const leaseStatus = room.leases[0]?.status ?? null;
+                    return (
                     <TableRow key={room.id}>
                       <TableCell className="font-medium">{room.code}</TableCell>
                       <TableCell>{formatRupiah(room.price)}</TableCell>
                       <TableCell>
-                        <Badge variant={roomStatusBadgeVariant(room.status)}>
-                          {roomStatusLabel(room.status)}
+                        <Badge
+                          variant={roomOccupancyBadgeVariant({
+                            roomStatus: room.status,
+                            leaseStatus,
+                          })}
+                        >
+                          {roomOccupancyLabel({
+                            roomStatus: room.status,
+                            leaseStatus,
+                          })}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -122,7 +143,8 @@ export default async function PropertyDetailPage({
                         </form>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

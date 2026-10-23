@@ -42,6 +42,8 @@ type PanelProps = {
   tenants: CheckInTenantOption[];
   rooms: CheckInRoomOption[];
   addRoomsHref: string;
+  totalRooms: number;
+  busyRoomCount: number;
 };
 
 function CheckInFields({
@@ -187,6 +189,8 @@ function CheckInBody({
   tenants,
   rooms,
   addRoomsHref,
+  totalRooms,
+  busyRoomCount,
   pending,
   onSubmit,
 }: PanelProps & {
@@ -217,15 +221,28 @@ function CheckInBody({
   }
 
   if (rooms.length === 0) {
+    const heldByLease = totalRooms > 0 && busyRoomCount > 0;
     return (
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Tidak ada kamar kosong. Tambah kamar baru atau check-out penyewa yang
-          sudah selesai.
+          {heldByLease
+            ? "Tidak ada kamar yang bisa di-check-in. Kamar yang terlihat kosong di Properti sering masih menunggu pelunasan tagihan check-in pertama — lunasi atau batalkan kontrak itu dulu."
+            : "Tidak ada kamar kosong. Tambah kamar baru di properti."}
         </p>
-        <Button asChild className="h-11 w-full">
-          <Link href={addRoomsHref}>Kelola kamar</Link>
-        </Button>
+        <div className="flex flex-col gap-2">
+          {heldByLease && (
+            <Button asChild className="h-11 w-full">
+              <Link href="/leases">Lihat kontrak</Link>
+            </Button>
+          )}
+          <Button
+            asChild
+            variant={heldByLease ? "outline" : "default"}
+            className="h-11 w-full"
+          >
+            <Link href={addRoomsHref}>Kelola kamar</Link>
+          </Button>
+        </div>
       </div>
     );
   }

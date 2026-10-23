@@ -84,3 +84,25 @@ export function roomStatusBadgeVariant(
   if (status === "OCCUPIED") return "secondary";
   return "warning";
 }
+
+/**
+ * Status tampilan kamar: kontrak aktif/pending mengalahkan RoomStatus
+ * (saat check-in menunggu bayar, RoomStatus masih AVAILABLE/"Kosong").
+ */
+export function roomOccupancyLabel(input: {
+  roomStatus: string;
+  leaseStatus?: string | null;
+}) {
+  if (input.leaseStatus === "PENDING") return "Menunggu bayar";
+  if (input.leaseStatus === "ACTIVE") return "Terisi";
+  return roomStatusLabel(input.roomStatus);
+}
+
+export function roomOccupancyBadgeVariant(input: {
+  roomStatus: string;
+  leaseStatus?: string | null;
+}): "success" | "secondary" | "warning" {
+  if (input.leaseStatus === "PENDING") return "warning";
+  if (input.leaseStatus === "ACTIVE") return "secondary";
+  return roomStatusBadgeVariant(input.roomStatus);
+}

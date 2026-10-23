@@ -61,10 +61,13 @@ export default async function LeasesPage() {
     ]);
 
   const busyIds = busyRoomIds.map((r) => r.roomId);
+  // Kamar bisa check-in = tidak punya kontrak ACTIVE/PENDING.
+  // Jangan andalkan RoomStatus saja: saat check-in menunggu bayar status
+  // kamar masih AVAILABLE ("Kosong") di Properti, tapi kamar sudah dipegang.
   const rooms = await db.room.findMany({
     where: {
       property: { organizationId },
-      status: { in: ["AVAILABLE", "MAINTENANCE"] },
+      status: { not: "MAINTENANCE" },
       ...(busyIds.length > 0 ? { id: { notIn: busyIds } } : {}),
     },
     orderBy: [{ property: { name: "asc" } }, { code: "asc" }],
@@ -75,6 +78,7 @@ export default async function LeasesPage() {
       property: { select: { name: true } },
     },
   });
+  const busyRoomCount = busyIds.length;
 
   const addRoomsHref = firstProperty
     ? `/properties/${firstProperty.id}`
@@ -99,6 +103,8 @@ export default async function LeasesPage() {
       propertyName: r.property.name,
     })),
     addRoomsHref,
+    totalRooms,
+    busyRoomCount,
   };
 
   return (
@@ -149,9 +155,9 @@ export default async function LeasesPage() {
         rooms.length === 0 && (
           <SetupNextHint
             title="Semua kamar sedang terpakai"
-            body="Tidak ada kamar kosong untuk check-in. Tambah kamar baru atau check-out penyewa yang sudah selesai."
-            href={addRoomsHref}
-            cta="Kelola kamar"
+            body="Kamar yang terlihat kosong di Properti bisa masih menunggu pelunasan check-in. Lunasi/batalkan di Kontrak, check-out, atau tambah kamar baru."
+            href="/leases"
+            cta="Lihat kontrak"
           />
         )}
       {totalRooms > 0 &&
