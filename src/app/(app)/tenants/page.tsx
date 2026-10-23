@@ -1,28 +1,17 @@
 import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
-import {
-  createTenantAction,
-  deleteTenantAction,
-} from "@/lib/actions/properties";
+import { createTenantAction } from "@/lib/actions/properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SetupNextHint } from "@/components/setup-next-hint";
+import { TenantList } from "@/components/tenant-list";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default async function TenantsPage() {
   const { organizationId } = await requireOrg();
@@ -79,49 +68,14 @@ export default async function TenantsPage() {
       )}
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Daftar penyewa</CardTitle>
-            <CardDescription>{tenants.length} penyewa</CardDescription>
-          </CardHeader>
-          <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>WhatsApp</TableHead>
-                  <TableHead>Kamar aktif</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tenants.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-muted-foreground">
-                      Belum ada penyewa. Pakai form &quot;Tambah penyewa&quot;.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  tenants.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-medium">{t.name}</TableCell>
-                      <TableCell>{t.phone}</TableCell>
-                      <TableCell>{t.leases[0]?.room.code ?? "-"}</TableCell>
-                      <TableCell>
-                        <form action={deleteTenantAction}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <Button type="submit" size="sm" variant="ghost">
-                            Hapus
-                          </Button>
-                        </form>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <TenantList
+          tenants={tenants.map((t) => ({
+            id: t.id,
+            name: t.name,
+            phone: t.phone,
+            roomCode: t.leases[0]?.room.code ?? null,
+          }))}
+        />
 
         <Card id="tambah-penyewa">
           <CardHeader>

@@ -2,19 +2,14 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import {
-  cancelPendingLeaseAction,
-  checkInAction,
-  checkOutAction,
-} from "@/lib/actions/leases";
-import { leaseStatusLabel } from "@/lib/labels";
-import { formatRupiah, formatDate } from "@/lib/utils";
+import { checkInAction } from "@/lib/actions/leases";
+import { formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { PlanLimitNotice } from "@/components/plan-limit-notice";
 import { SetupNextHint } from "@/components/setup-next-hint";
+import { LeaseList } from "@/components/lease-list";
 import {
   Card,
   CardContent,
@@ -22,21 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import Link from "next/link";
-
-function leaseStatusBadge(status: string) {
-  if (status === "ACTIVE") return "success" as const;
-  if (status === "PENDING") return "warning" as const;
-  return "secondary" as const;
-}
 
 export default async function LeasesPage() {
   const { organizationId, organization } = await requireOrg();
@@ -167,90 +148,19 @@ export default async function LeasesPage() {
         )}
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Daftar kontrak</CardTitle>
-            <CardDescription>{leases.length} kontrak</CardDescription>
-          </CardHeader>
-          <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Penyewa</TableHead>
-                  <TableHead>Kamar</TableHead>
-                  <TableHead>Sewa</TableHead>
-                  <TableHead>Mulai</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leases.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-muted-foreground">
-                      Belum ada kontrak. Gunakan form Check-in baru.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-                {leases.map((lease) => (
-                  <TableRow key={lease.id}>
-                    <TableCell>{lease.tenant.name}</TableCell>
-                    <TableCell>
-                      {lease.room.property.name} · {lease.room.code}
-                    </TableCell>
-                    <TableCell>{formatRupiah(lease.monthlyRent)}</TableCell>
-                    <TableCell>
-                      <div>{formatDate(lease.startDate)}</div>
-                      {isAnniversary && (
-                        <div className="text-xs text-muted-foreground">
-                          Tiap tgl {lease.billingAnchorDay}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={leaseStatusBadge(lease.status)}>
-                        {leaseStatusLabel(lease.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        {lease.status === "PENDING" && (
-                          <>
-                            <Button asChild size="sm" variant="default">
-                              <Link href="/invoices">Lunasin tagihan</Link>
-                            </Button>
-                            <form action={cancelPendingLeaseAction}>
-                              <input
-                                type="hidden"
-                                name="leaseId"
-                                value={lease.id}
-                              />
-                              <Button type="submit" size="sm" variant="outline">
-                                Batalkan
-                              </Button>
-                            </form>
-                          </>
-                        )}
-                        {lease.status === "ACTIVE" && (
-                          <form action={checkOutAction}>
-                            <input
-                              type="hidden"
-                              name="leaseId"
-                              value={lease.id}
-                            />
-                            <Button type="submit" size="sm" variant="outline">
-                              Check-out
-                            </Button>
-                          </form>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <LeaseList
+          isAnniversary={isAnniversary}
+          leases={leases.map((lease) => ({
+            id: lease.id,
+            monthlyRent: lease.monthlyRent,
+            startDate: lease.startDate.toISOString(),
+            billingAnchorDay: lease.billingAnchorDay,
+            status: lease.status,
+            tenantName: lease.tenant.name,
+            propertyName: lease.room.property.name,
+            roomCode: lease.room.code,
+          }))}
+        />
 
         <Card id="check-in">
           <CardHeader>

@@ -4,31 +4,8 @@ import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
 import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
 import { generateInvoicesNowAction } from "@/lib/actions/invoices";
-import {
-  invoiceStatusBadgeVariant,
-  invoiceStatusLabel,
-  whatsappStatusBadgeVariant,
-  whatsappStatusLabel,
-} from "@/lib/labels";
-import { formatRupiah, formatDate, MONTHS_ID } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { GenerateInvoicesButton } from "@/components/generate-invoices-button";
-import { InvoiceRowActions } from "@/components/invoice-row-actions";
+import { InvoiceList } from "@/components/invoice-list";
 import { SetupNextHint } from "@/components/setup-next-hint";
 import { isOrgMidtransConfigured } from "@/lib/payments/midtrans";
 
@@ -81,6 +58,22 @@ export default async function InvoicesPage() {
       },
     }),
   ]);
+
+  const listItems = invoices.map((inv) => ({
+    id: inv.id,
+    periodYear: inv.periodYear,
+    periodMonth: inv.periodMonth,
+    amount: inv.amount,
+    amountPaid: inv.amountPaid,
+    dueDate: inv.dueDate.toISOString(),
+    status: inv.status,
+    paymentUrl: inv.paymentUrl,
+    midtransOrderId: inv.midtransOrderId,
+    tenantName: inv.lease.tenant.name,
+    propertyName: inv.lease.room.property.name,
+    roomCode: inv.lease.room.code,
+    waStatus: inv.whatsappLogs[0]?.status ?? null,
+  }));
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -173,179 +166,17 @@ export default async function InvoicesPage() {
         </div>
       )}
 
-      <Card id="daftar-tagihan">
-        <CardHeader className="pb-3">
-          <CardTitle>Semua tagihan</CardTitle>
-          <CardDescription>
-            {invoices.length}
-            {invoices.length >= 60 ? "+" : ""} tagihan terbaru
-            {invoices.length >= 60 ? " (maks. 60 ditampilkan)" : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 p-3 pt-0 sm:p-6 sm:pt-0">
-          {invoices.length === 0 ? (
-            <p className="px-1 py-6 text-sm text-muted-foreground">
-              {leaseCount === 0
-                ? "Belum ada tagihan. Check-in penyewa dulu di menu Kontrak."
-                : 'Belum ada tagihan. Klik "Generate tagihan bulan ini".'}
-            </p>
-          ) : (
-            <>
-              {/* Mobile: kartu */}
-              <ul className="space-y-3 md:hidden">
-                {invoices.map((inv) => {
-                  const periodLabel = `${MONTHS_ID[inv.periodMonth - 1]} ${inv.periodYear}`;
-                  const outstanding = Math.max(0, inv.amount - inv.amountPaid);
-                  const lastWa = inv.whatsappLogs[0];
-                  const unpaid = inv.status !== "PAID";
-
-                  return (
-                    <li
-                      key={inv.id}
-                      className="rounded-xl border bg-card px-3 py-3 shadow-sm"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate font-medium leading-tight">
-                            {inv.lease.tenant.name}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {inv.lease.room.property.name} ·{" "}
-                            {inv.lease.room.code} · {periodLabel}
-                          </p>
-                        </div>
-                        <Badge
-                          variant={invoiceStatusBadgeVariant(inv.status)}
-                          className="shrink-0"
-                        >
-                          {invoiceStatusLabel(inv.status)}
-                        </Badge>
-                      </div>
-
-                      <div className="mt-3 flex items-end justify-between gap-2">
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            {unpaid ? "Sisa bayar" : "Lunas"}
-                          </p>
-                          <p className="text-lg font-semibold tabular-nums leading-tight">
-                            {formatRupiah(unpaid ? outstanding : inv.amount)}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            Jatuh tempo {formatDate(inv.dueDate)}
-                            {lastWa
-                              ? ` · WA ${whatsappStatusLabel(lastWa.status)}`
-                              : ""}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <InvoiceRowActions
-                          invoiceId={inv.id}
-                          tenantName={inv.lease.tenant.name}
-                          periodLabel={periodLabel}
-                          amount={inv.amount}
-                          amountPaid={inv.amountPaid}
-                          status={inv.status}
-                          paymentUrl={inv.paymentUrl}
-                          midtransOrderId={inv.midtransOrderId}
-                          pro={pro}
-                          canWhatsApp
-                          midtransReady={midtransReady}
-                          waDisabled={Boolean(waQuota.exhausted)}
-                          fullWidth
-                        />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              {/* Desktop: tabel */}
-              <div className="-mx-2 hidden overflow-x-auto md:mx-0 md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Periode</TableHead>
-                      <TableHead>Penyewa</TableHead>
-                      <TableHead>Kamar</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Terbayar</TableHead>
-                      <TableHead>Jatuh tempo</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>WA</TableHead>
-                      <TableHead className="w-[6.5rem]">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoices.map((inv) => {
-                      const lastWa = inv.whatsappLogs[0];
-                      const periodLabel = `${MONTHS_ID[inv.periodMonth - 1]} ${inv.periodYear}`;
-                      return (
-                        <TableRow key={inv.id}>
-                          <TableCell className="whitespace-nowrap">
-                            {periodLabel}
-                          </TableCell>
-                          <TableCell>{inv.lease.tenant.name}</TableCell>
-                          <TableCell>
-                            {inv.lease.room.property.name} ·{" "}
-                            {inv.lease.room.code}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {formatRupiah(inv.amount)}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {formatRupiah(inv.amountPaid)}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {formatDate(inv.dueDate)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={invoiceStatusBadgeVariant(inv.status)}
-                            >
-                              {invoiceStatusLabel(inv.status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {lastWa ? (
-                              <Badge
-                                variant={whatsappStatusBadgeVariant(
-                                  lastWa.status,
-                                )}
-                              >
-                                {whatsappStatusLabel(lastWa.status)}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <InvoiceRowActions
-                              invoiceId={inv.id}
-                              tenantName={inv.lease.tenant.name}
-                              periodLabel={periodLabel}
-                              amount={inv.amount}
-                              amountPaid={inv.amountPaid}
-                              status={inv.status}
-                              paymentUrl={inv.paymentUrl}
-                              midtransOrderId={inv.midtransOrderId}
-                              pro={pro}
-                              canWhatsApp
-                              midtransReady={midtransReady}
-                              waDisabled={Boolean(waQuota.exhausted)}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <InvoiceList
+        invoices={listItems}
+        emptyHint={
+          leaseCount === 0
+            ? "Belum ada tagihan. Check-in penyewa dulu di menu Kontrak."
+            : 'Belum ada tagihan. Klik "Generate tagihan bulan ini".'
+        }
+        pro={pro}
+        midtransReady={midtransReady}
+        waDisabled={Boolean(waQuota.exhausted)}
+      />
     </div>
   );
 }

@@ -10,8 +10,7 @@ import {
   leaseStatusLabel,
   roomStatusLabel,
 } from "@/lib/labels";
-import { formatDate, formatRupiah } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { formatRupiah } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -20,15 +19,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ExportCsvButton } from "@/components/export-csv-button";
-import { ExportPdfButton } from "@/components/export-pdf-button";
+  ArrearsReportTable,
+  OccupancyReportTable,
+} from "@/components/report-tables";
 
 function statusLabel(code: string) {
   const invoice = invoiceStatusLabel(code);
@@ -47,8 +40,7 @@ export default async function ReportsPage() {
     getOccupancyReport(organization.id),
   ]);
 
-  const orgLabel = organization.name;
-  const printedHint = `Organisasi: ${orgLabel}`;
+  const printedHint = `Organisasi: ${organization.name}`;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -58,7 +50,10 @@ export default async function ReportsPage() {
         </h1>
         <p className="text-sm text-muted-foreground sm:text-base">
           Tunggakan sewa dan okupansi kamar. Fitur paket Pro+.{" "}
-          <Link href="/panduan#langganan" className="font-medium text-primary underline">
+          <Link
+            href="/panduan#langganan"
+            className="font-medium text-primary underline"
+          >
             Tentang paket
           </Link>
         </p>
@@ -85,212 +80,42 @@ export default async function ReportsPage() {
         />
       </div>
 
-      <Card>
-        <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1.5">
-            <CardTitle>Tunggakan</CardTitle>
-            <CardDescription>
-              Tagihan belum lunas, sebagian, atau terlambat.
-            </CardDescription>
-          </div>
-          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
-            <ExportCsvButton
-              filename={`tunggakan-sinikos.csv`}
-              headers={[
-                "Penyewa",
-                "Telepon",
-                "Properti",
-                "Kamar",
-                "Periode",
-                "Jumlah",
-                "Dibayar",
-                "Sisa",
-                "Jatuh tempo",
-                "Status",
-              ]}
-              rows={arrears.rows.map((r) => [
-                r.tenantName,
-                r.phone,
-                r.propertyName,
-                r.roomCode,
-                r.period,
-                r.amount,
-                r.amountPaid,
-                r.outstanding,
-                formatDate(r.dueDate),
-                statusLabel(r.status),
-              ])}
-            />
-            <ExportPdfButton
-              filename={`tunggakan-sinikos.pdf`}
-              title="Laporan Tunggakan"
-              subtitle={printedHint}
-              headers={[
-                "Penyewa",
-                "Properti",
-                "Kamar",
-                "Periode",
-                "Sisa",
-                "Jatuh tempo",
-                "Status",
-              ]}
-              rows={arrears.rows.map((r) => [
-                r.tenantName,
-                r.propertyName,
-                r.roomCode,
-                r.period,
-                formatRupiah(r.outstanding),
-                formatDate(r.dueDate),
-                statusLabel(r.status),
-              ])}
-              footNote={`Total tunggakan: ${formatRupiah(arrears.totalOutstanding)} (${arrears.count} tagihan)`}
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Penyewa</TableHead>
-                <TableHead>Kamar</TableHead>
-                <TableHead>Periode</TableHead>
-                <TableHead>Sisa</TableHead>
-                <TableHead>Jatuh tempo</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {arrears.rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground">
-                    Tidak ada tunggakan.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                arrears.rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.tenantName}</TableCell>
-                    <TableCell>
-                      {r.propertyName} · {r.roomCode}
-                    </TableCell>
-                    <TableCell>{r.period}</TableCell>
-                    <TableCell>{formatRupiah(r.outstanding)}</TableCell>
-                    <TableCell>{formatDate(r.dueDate)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          r.status === "OVERDUE" ? "warning" : "secondary"
-                        }
-                      >
-                        {statusLabel(r.status)}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <ArrearsReportTable
+        printedHint={printedHint}
+        totalOutstanding={arrears.totalOutstanding}
+        count={arrears.count}
+        rows={arrears.rows.map((r) => ({
+          id: r.id,
+          tenantName: r.tenantName,
+          phone: r.phone,
+          propertyName: r.propertyName,
+          roomCode: r.roomCode,
+          period: r.period,
+          amount: r.amount,
+          amountPaid: r.amountPaid,
+          outstanding: r.outstanding,
+          dueDate: r.dueDate.toISOString(),
+          status: r.status,
+          statusLabel: statusLabel(r.status),
+        }))}
+      />
 
-      <Card>
-        <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1.5">
-            <CardTitle>Okupansi kamar</CardTitle>
-            <CardDescription>
-              Status tiap kamar dan penyewa aktif / menunggu bayar.
-            </CardDescription>
-          </div>
-          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
-            <ExportCsvButton
-              filename={`okupansi-sinikos.csv`}
-              headers={[
-                "Properti",
-                "Kamar",
-                "Status kamar",
-                "Harga",
-                "Penyewa",
-                "Status kontrak",
-              ]}
-              rows={occupancy.rows.map((r) => [
-                r.propertyName,
-                r.roomCode,
-                statusLabel(r.status),
-                r.price,
-                r.tenantName,
-                r.leaseStatus ? statusLabel(r.leaseStatus) : "",
-              ])}
-            />
-            <ExportPdfButton
-              filename={`okupansi-sinikos.pdf`}
-              title="Laporan Okupansi Kamar"
-              subtitle={printedHint}
-              headers={[
-                "Properti",
-                "Kamar",
-                "Status",
-                "Harga",
-                "Penyewa",
-                "Kontrak",
-              ]}
-              rows={occupancy.rows.map((r) => [
-                r.propertyName,
-                r.roomCode,
-                statusLabel(r.status),
-                formatRupiah(r.price),
-                r.tenantName ?? "-",
-                r.leaseStatus ? statusLabel(r.leaseStatus) : "-",
-              ])}
-              footNote={`Okupansi ${occupancy.occupancyRate}% · ${occupancy.summary.occupied}/${occupancy.summary.total} kamar terisi · ${occupancy.summary.available} kosong · ${occupancy.summary.pendingCheckIn} menunggu bayar`}
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Properti</TableHead>
-                <TableHead>Kamar</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Harga</TableHead>
-                <TableHead>Penyewa</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {occupancy.rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
-                    Belum ada kamar.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                occupancy.rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>{r.propertyName}</TableCell>
-                    <TableCell className="font-medium">{r.roomCode}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {statusLabel(r.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatRupiah(r.price)}</TableCell>
-                    <TableCell>
-                      {r.tenantName ?? (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                      {r.leaseStatus === "PENDING" && (
-                        <span className="ml-2 text-xs text-amber-800">
-                          menunggu bayar
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <OccupancyReportTable
+        printedHint={printedHint}
+        occupancyRate={occupancy.occupancyRate}
+        summary={occupancy.summary}
+        rows={occupancy.rows.map((r) => ({
+          id: r.id,
+          propertyName: r.propertyName,
+          roomCode: r.roomCode,
+          status: r.status,
+          statusLabel: statusLabel(r.status),
+          price: r.price,
+          tenantName: r.tenantName,
+          leaseStatus: r.leaseStatus,
+          leaseStatusLabel: r.leaseStatus ? statusLabel(r.leaseStatus) : "",
+        }))}
+      />
     </div>
   );
 }
