@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ExportCsvButton } from "@/components/export-csv-button";
+import { ExportPdfButton } from "@/components/export-pdf-button";
 
 function statusLabel(code: string) {
   const invoice = invoiceStatusLabel(code);
@@ -45,6 +46,9 @@ export default async function ReportsPage() {
     getArrearsReport(organization.id),
     getOccupancyReport(organization.id),
   ]);
+
+  const orgLabel = organization.name;
+  const printedHint = `Organisasi: ${orgLabel}`;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -89,33 +93,59 @@ export default async function ReportsPage() {
               Tagihan belum lunas, sebagian, atau terlambat.
             </CardDescription>
           </div>
-          <ExportCsvButton
-            filename={`tunggakan-sinikos.csv`}
-            headers={[
-              "Penyewa",
-              "Telepon",
-              "Properti",
-              "Kamar",
-              "Periode",
-              "Jumlah",
-              "Dibayar",
-              "Sisa",
-              "Jatuh tempo",
-              "Status",
-            ]}
-            rows={arrears.rows.map((r) => [
-              r.tenantName,
-              r.phone,
-              r.propertyName,
-              r.roomCode,
-              r.period,
-              r.amount,
-              r.amountPaid,
-              r.outstanding,
-              formatDate(r.dueDate),
-              statusLabel(r.status),
-            ])}
-          />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <ExportCsvButton
+              filename={`tunggakan-sinikos.csv`}
+              headers={[
+                "Penyewa",
+                "Telepon",
+                "Properti",
+                "Kamar",
+                "Periode",
+                "Jumlah",
+                "Dibayar",
+                "Sisa",
+                "Jatuh tempo",
+                "Status",
+              ]}
+              rows={arrears.rows.map((r) => [
+                r.tenantName,
+                r.phone,
+                r.propertyName,
+                r.roomCode,
+                r.period,
+                r.amount,
+                r.amountPaid,
+                r.outstanding,
+                formatDate(r.dueDate),
+                statusLabel(r.status),
+              ])}
+            />
+            <ExportPdfButton
+              filename={`tunggakan-sinikos.pdf`}
+              title="Laporan Tunggakan"
+              subtitle={printedHint}
+              headers={[
+                "Penyewa",
+                "Properti",
+                "Kamar",
+                "Periode",
+                "Sisa",
+                "Jatuh tempo",
+                "Status",
+              ]}
+              rows={arrears.rows.map((r) => [
+                r.tenantName,
+                r.propertyName,
+                r.roomCode,
+                r.period,
+                formatRupiah(r.outstanding),
+                formatDate(r.dueDate),
+                statusLabel(r.status),
+              ])}
+              footNote={`Total tunggakan: ${formatRupiah(arrears.totalOutstanding)} (${arrears.count} tagihan)`}
+            />
+          </div>
         </CardHeader>
         <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
           <Table>
@@ -171,25 +201,49 @@ export default async function ReportsPage() {
               Status tiap kamar dan penyewa aktif / menunggu bayar.
             </CardDescription>
           </div>
-          <ExportCsvButton
-            filename={`okupansi-sinikos.csv`}
-            headers={[
-              "Properti",
-              "Kamar",
-              "Status kamar",
-              "Harga",
-              "Penyewa",
-              "Status kontrak",
-            ]}
-            rows={occupancy.rows.map((r) => [
-              r.propertyName,
-              r.roomCode,
-              statusLabel(r.status),
-              r.price,
-              r.tenantName,
-              r.leaseStatus ? statusLabel(r.leaseStatus) : "",
-            ])}
-          />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <ExportCsvButton
+              filename={`okupansi-sinikos.csv`}
+              headers={[
+                "Properti",
+                "Kamar",
+                "Status kamar",
+                "Harga",
+                "Penyewa",
+                "Status kontrak",
+              ]}
+              rows={occupancy.rows.map((r) => [
+                r.propertyName,
+                r.roomCode,
+                statusLabel(r.status),
+                r.price,
+                r.tenantName,
+                r.leaseStatus ? statusLabel(r.leaseStatus) : "",
+              ])}
+            />
+            <ExportPdfButton
+              filename={`okupansi-sinikos.pdf`}
+              title="Laporan Okupansi Kamar"
+              subtitle={printedHint}
+              headers={[
+                "Properti",
+                "Kamar",
+                "Status",
+                "Harga",
+                "Penyewa",
+                "Kontrak",
+              ]}
+              rows={occupancy.rows.map((r) => [
+                r.propertyName,
+                r.roomCode,
+                statusLabel(r.status),
+                formatRupiah(r.price),
+                r.tenantName ?? "-",
+                r.leaseStatus ? statusLabel(r.leaseStatus) : "-",
+              ])}
+              footNote={`Okupansi ${occupancy.occupancyRate}% · ${occupancy.summary.occupied}/${occupancy.summary.total} kamar terisi · ${occupancy.summary.available} kosong · ${occupancy.summary.pendingCheckIn} menunggu bayar`}
+            />
+          </div>
         </CardHeader>
         <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
           <Table>
