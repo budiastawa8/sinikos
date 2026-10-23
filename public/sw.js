@@ -1,6 +1,6 @@
 /* SiniKos service worker — cache aset statis; navigasi & API selalu network-first.
  * Naikkan CACHE (vN) setiap kali ikon/manifest branding diganti agar klien buang cache lama. */
-const CACHE = "sinikos-static-v3";
+const CACHE = "sinikos-static-v4";
 const PRECACHE = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",

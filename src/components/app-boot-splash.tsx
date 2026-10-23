@@ -62,7 +62,7 @@ export function AppBootSplash() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#0d5c56] transition-opacity duration-300",
+        "fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#005f5f] transition-opacity duration-300",
         leaving ? "pointer-events-none opacity-0" : "opacity-100",
       )}
       role="status"

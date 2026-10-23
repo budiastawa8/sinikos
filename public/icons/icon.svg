@@ -1,7 +1,5 @@
+<!-- SiniKos mark: gunakan icon-chosen.png / icon-512.png sebagai sumber kebenaran.
+     Jalankan: npm run icons:regen setelah mengganti icon-chosen.png -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SiniKos">
-  <rect width="512" height="512" fill="#0d5c56"/>
-  <g transform="translate(92.16 92.16) scale(0.64)">
-    <path fill="none" stroke="#ffffff" stroke-width="54" stroke-linecap="butt" stroke-linejoin="miter"
-      d="M 348 198 L 256 96 L 164 198 L 164 268 L 320 268 L 320 400 L 176 400 L 176 348"/>
-  </g>
+  <image href="/icons/icon-512.png" width="512" height="512"/>
 </svg>
