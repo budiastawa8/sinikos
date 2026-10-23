@@ -35,7 +35,7 @@ Buka [http://localhost:3000](http://localhost:3000).
 ## Deploy Vercel
 
 1. Push repo, import ke Vercel.
-2. Set env: `DATABASE_URL` (Neon pooled), `DIRECT_URL` (Neon direct; boleh sama di lokal), `AUTH_SECRET`, `AUTH_URL`, `WHATSAPP_PROVIDER` (+ `FONNTE_TOKEN` atau kredensial Meta/custom), `CRON_SECRET`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+2. Set env: `DATABASE_URL` (Neon pooled), `DIRECT_URL` (Neon direct; boleh sama di lokal), `AUTH_SECRET`, `AUTH_URL`, `WHATSAPP_PROVIDER` (+ `FONNTE_TOKEN` atau kredensial Meta/custom), `CRON_SECRET`, `PLATFORM_ADMIN_EMAILS` (email Anda untuk `/admin`), `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
 3. Build memakai `prisma generate` (sudah di script `build`).
 4. Jalankan migrasi: `npx prisma migrate deploy` (memakai `DIRECT_URL`).
 5. Cron: `vercel.json` → `/api/cron/billing` (Authorization Bearer `CRON_SECRET`).
@@ -73,9 +73,10 @@ Panduan untuk pemilik ada di app: menu **Panduan** (`/panduan`). Midtrans sewa *
 
 ## Operasional & monitoring (operator platform)
 
+- **Panel admin:** `/admin` — ringkasan org, paket Gratis/Pro/Pro+, total kos & kamar, daftar pemilik. Akses hanya email di `PLATFORM_ADMIN_EMAILS` (login dulu dengan akun itu).
 - **Vercel → Deployments:** pastikan build hijau setelah push.
 - **Vercel → Logs:** cari `[midtrans]` / `[midtrans/subscription]` jika bayar / webhook gagal.
-- Env penting: `DATABASE_URL` (pooled), `DIRECT_URL` (direct), `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_FREE_MONTHLY_QUOTA`, `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
+- Env penting: `DATABASE_URL` (pooled), `DIRECT_URL` (direct), `AUTH_SECRET`, `AUTH_URL`, `CRON_SECRET`, `PLATFORM_ADMIN_EMAILS`, `WHATSAPP_PROVIDER`, kredensial WhatsApp (Fonnte/Meta/custom), `PLATFORM_WA_FREE_MONTHLY_QUOTA`, `PLATFORM_WA_MONTHLY_QUOTA`, `PLATFORM_WA_PRO_PLUS_MONTHLY_QUOTA`, `PLATFORM_MIDTRANS_SERVER_KEY`, `PLATFORM_MIDTRANS_IS_PRODUCTION`.
 - Performa DB: `requireOrg` di-cache per request; Dashboard/Kontrak menghindari query berantai; warm-up opsional di `/api/cron/warmup`.
 - WhatsApp provider: `fonnte` (default), `meta` (Cloud API + opsional template), `custom` (`WHATSAPP_GATEWAY_URL` POST `{phone,message}`).
 - Langganan platform: biarkan Sandbox sampai siap; Production = uang sungguhan + Notification URL `/api/payments/midtrans/subscription`.

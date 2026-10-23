@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/tenant";
+import { isPlatformAdminEmail } from "@/lib/platform-admin";
 import { isProActive } from "@/lib/billing/plans";
 import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
 import { notificationUrlHint } from "@/lib/payments/midtrans";
@@ -26,8 +27,9 @@ function storedKeyHint(enc: string | null | undefined) {
 }
 
 export default async function SettingsPage() {
-  const { organization, organizationId, role } = await requireOrg();
+  const { organization, organizationId, role, session } = await requireOrg();
   const isOwner = role === "OWNER";
+  const isPlatformAdmin = isPlatformAdminEmail(session.user?.email);
   const pro = isProActive(organization);
   const waQuota = await getWhatsAppQuotaUsage(organizationId);
   const serverHint = storedKeyHint(organization.midtransServerKeyEnc);
@@ -44,13 +46,18 @@ export default async function SettingsPage() {
           Bisnis, jadwal tagihan, WhatsApp, dan Midtrans opsional untuk uang
           sewa.
         </p>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
             <Link href="/panduan">Buka panduan pemilik</Link>
           </Button>
           <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
             <Link href="/staff">Tim & staf</Link>
           </Button>
+          {isPlatformAdmin ? (
+            <Button asChild variant="secondary" className="h-11 w-full sm:w-auto">
+              <Link href="/admin">Panel platform</Link>
+            </Button>
+          ) : null}
         </div>
       </div>
 
