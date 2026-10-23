@@ -3,19 +3,10 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { loadEntitlements } from "@/lib/billing/entitlements";
 import { canAdd } from "@/lib/billing/plans";
-import {
-  createRoomAction,
-  updateRoomStatusAction,
-} from "@/lib/actions/properties";
-import {
-  roomOccupancyBadgeVariant,
-  roomOccupancyLabel,
-} from "@/lib/labels";
-import { formatRupiah } from "@/lib/utils";
+import { createRoomAction } from "@/lib/actions/properties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -24,14 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PlanLimitNotice } from "@/components/plan-limit-notice";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { RoomList } from "@/components/room-list";
 
 export default async function PropertyDetailPage({
   params,
@@ -74,82 +58,15 @@ export default async function PropertyDetailPage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>Kamar</CardTitle>
-            <CardDescription>{property.rooms.length} kamar</CardDescription>
-          </CardHeader>
-          <CardContent className="-mx-2 overflow-x-auto sm:mx-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Harga</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {property.rooms.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-muted-foreground">
-                      Belum ada kamar. Isi form &quot;Tambah kamar&quot; di
-                      sebelah — contoh kode: A1, harga sewa bulanan.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  property.rooms.map((room) => {
-                    const leaseStatus = room.leases[0]?.status ?? null;
-                    return (
-                    <TableRow key={room.id}>
-                      <TableCell className="font-medium">{room.code}</TableCell>
-                      <TableCell>{formatRupiah(room.price)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={roomOccupancyBadgeVariant({
-                            roomStatus: room.status,
-                            leaseStatus,
-                          })}
-                        >
-                          {roomOccupancyLabel({
-                            roomStatus: room.status,
-                            leaseStatus,
-                          })}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <form
-                          action={updateRoomStatusAction}
-                          className="flex flex-col gap-2 sm:flex-row"
-                        >
-                          <input type="hidden" name="roomId" value={room.id} />
-                          <select
-                            name="status"
-                            defaultValue={room.status}
-                            className="h-10 min-w-0 flex-1 rounded-md border px-2 text-sm sm:h-9"
-                          >
-                            <option value="AVAILABLE">Kosong</option>
-                            <option value="OCCUPIED">Terisi</option>
-                            <option value="MAINTENANCE">Perawatan</option>
-                          </select>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            variant="outline"
-                            className="h-10 sm:h-9"
-                          >
-                            Simpan
-                          </Button>
-                        </form>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <RoomList
+          rooms={property.rooms.map((room) => ({
+            id: room.id,
+            code: room.code,
+            price: room.price,
+            status: room.status,
+            leaseStatus: room.leases[0]?.status ?? null,
+          }))}
+        />
 
         <Card>
           <CardHeader>
