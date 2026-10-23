@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import {
+  ChevronRight,
+  ExternalLink,
+  MessageCircle,
+  RefreshCw,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   createPaymentLinkAction,
@@ -36,7 +43,7 @@ type Props = {
   canWhatsApp?: boolean;
   midtransReady: boolean;
   waDisabled?: boolean;
-  /** Lebar penuh untuk kartu mobile (legacy; pemicu tetap bergaya teks). */
+  /** Lebar penuh untuk kartu mobile. */
   fullWidth?: boolean;
 };
 
@@ -113,20 +120,23 @@ export function InvoiceRowActions({
       }}
     >
       <SheetTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="default"
+          size="sm"
           className={cn(
-            "inline-flex items-center text-inherit underline-offset-2 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            fullWidth
-              ? "h-10 w-full justify-end text-sm text-muted-foreground"
-              : "text-muted-foreground",
+            "gap-1.5",
+            fullWidth ? "h-10 w-full" : "h-10 px-3",
           )}
           aria-label={`Aksi tagihan ${tenantName}`}
         >
           Aksi
-        </button>
+        </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="gap-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <SheetContent
+        side="bottom"
+        className="gap-0 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
         <SheetHeader className="pb-3">
           <SheetTitle>
             {view === "pay" ? "Catat bayar" : "Aksi tagihan"}
@@ -140,11 +150,12 @@ export function InvoiceRowActions({
         </SheetHeader>
 
         {view === "menu" ? (
-          <div className="flex flex-col gap-1 px-3 pb-4">
+          <div className="flex flex-col gap-2 px-3 pb-4">
             {unpaid && (
               <ActionRow
                 disabled={pending}
                 onClick={() => setView("pay")}
+                icon={<Wallet className="size-5" />}
                 label="Catat bayar manual"
                 hint="Cash / transfer dicatat di SiniKos"
               />
@@ -159,6 +170,7 @@ export function InvoiceRowActions({
                     return resendWhatsAppAction(fd);
                   })
                 }
+                icon={<MessageCircle className="size-5" />}
                 label="Kirim WhatsApp"
                 hint={
                   waDisabled
@@ -194,6 +206,7 @@ export function InvoiceRowActions({
                     },
                   )
                 }
+                icon={<ExternalLink className="size-5" />}
                 label={
                   paymentUrl
                     ? "Buka link bayar Midtrans"
@@ -211,6 +224,7 @@ export function InvoiceRowActions({
                     return syncMidtransStatusAction(fd);
                   })
                 }
+                icon={<RefreshCw className="size-5" />}
                 label="Cek status bayar Midtrans"
               />
             )}
@@ -273,11 +287,13 @@ export function InvoiceRowActions({
 function ActionRow({
   label,
   hint,
+  icon,
   onClick,
   disabled,
 }: {
   label: string;
   hint?: string;
+  icon: ReactNode;
   onClick: () => void;
   disabled?: boolean;
 }) {
@@ -286,12 +302,20 @@ function ActionRow({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex min-h-12 w-full flex-col items-start justify-center rounded-lg px-3 py-3 text-left text-sm transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+      className="flex min-h-14 w-full items-center gap-3 rounded-xl border bg-card px-3 py-3 text-left shadow-sm transition-colors hover:bg-accent active:bg-accent/80 disabled:pointer-events-none disabled:opacity-50"
     >
-      <span className="font-medium">{label}</span>
-      {hint && (
-        <span className="mt-0.5 text-xs text-muted-foreground">{hint}</span>
-      )}
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium leading-tight">{label}</span>
+        {hint && (
+          <span className="mt-0.5 block text-xs text-muted-foreground">
+            {hint}
+          </span>
+        )}
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
     </button>
   );
 }

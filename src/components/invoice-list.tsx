@@ -142,28 +142,30 @@ export function InvoiceList({
                           {unpaid ? "sisa" : "lunas"}
                         </span>
                       </p>
-                      <div className="flex shrink-0 items-baseline gap-2 text-[11px] text-muted-foreground">
-                        <span>
-                          {formatDate(inv.dueDate)}
-                          {inv.waStatus
-                            ? ` · ${whatsappStatusLabel(inv.waStatus)}`
-                            : ""}
-                        </span>
-                        <InvoiceRowActions
-                          invoiceId={inv.id}
-                          tenantName={inv.tenantName}
-                          periodLabel={periodLabel}
-                          amount={inv.amount}
-                          amountPaid={inv.amountPaid}
-                          status={inv.status}
-                          paymentUrl={inv.paymentUrl}
-                          midtransOrderId={inv.midtransOrderId}
-                          pro={pro}
-                          canWhatsApp
-                          midtransReady={midtransReady}
-                          waDisabled={waDisabled}
-                        />
-                      </div>
+                      <p className="shrink-0 text-[11px] text-muted-foreground">
+                        {formatDate(inv.dueDate)}
+                        {inv.waStatus
+                          ? ` · ${whatsappStatusLabel(inv.waStatus)}`
+                          : ""}
+                      </p>
+                    </div>
+
+                    <div className="mt-2">
+                      <InvoiceRowActions
+                        invoiceId={inv.id}
+                        tenantName={inv.tenantName}
+                        periodLabel={periodLabel}
+                        amount={inv.amount}
+                        amountPaid={inv.amountPaid}
+                        status={inv.status}
+                        paymentUrl={inv.paymentUrl}
+                        midtransOrderId={inv.midtransOrderId}
+                        pro={pro}
+                        canWhatsApp
+                        midtransReady={midtransReady}
+                        waDisabled={waDisabled}
+                        fullWidth
+                      />
                     </div>
                   </li>
                 );
