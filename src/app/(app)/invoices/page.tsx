@@ -29,13 +29,14 @@ import {
 } from "@/components/ui/table";
 import { GenerateInvoicesButton } from "@/components/generate-invoices-button";
 import { InvoiceRowActions } from "@/components/invoice-row-actions";
+import { SetupNextHint } from "@/components/setup-next-hint";
 import { isOrgMidtransConfigured } from "@/lib/payments/midtrans";
 
 export default async function InvoicesPage() {
   const { organizationId, organization } = await requireOrg();
   const pro = isProActive(organization);
   const midtransReady = isOrgMidtransConfigured(organization);
-  const [invoices, waQuota] = await Promise.all([
+  const [invoices, waQuota, leaseCount] = await Promise.all([
     db.invoice.findMany({
       where: { organizationId },
       orderBy: [
@@ -73,6 +74,12 @@ export default async function InvoicesPage() {
       },
     }),
     getWhatsAppQuotaUsage(organizationId),
+    db.lease.count({
+      where: {
+        organizationId,
+        status: { in: ["ACTIVE", "PENDING"] },
+      },
+    }),
   ]);
 
   return (
@@ -128,6 +135,23 @@ export default async function InvoicesPage() {
         </div>
       </div>
 
+      {leaseCount === 0 && (
+        <SetupNextHint
+          title="Belum ada penyewa aktif"
+          body="Check-in penyewa ke kamar dulu. Tagihan pertama biasanya muncul otomatis setelah check-in."
+          href="/leases"
+          cta="Ke kontrak / check-in"
+        />
+      )}
+      {leaseCount > 0 && invoices.length === 0 && (
+        <SetupNextHint
+          title="Langkah berikutnya: buat tagihan"
+          body='Klik "Generate tagihan bulan ini", lalu catat bayar atau kirim WhatsApp dari tombol Aksi.'
+          href="#daftar-tagihan"
+          cta="Lihat daftar tagihan"
+        />
+      )}
+
       {waQuota.exhausted && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           Kuota WhatsApp {waQuota.periodLabel} habis ({waQuota.used}/
@@ -148,7 +172,7 @@ export default async function InvoicesPage() {
         </div>
       )}
 
-      <Card>
+      <Card id="daftar-tagihan">
         <CardHeader>
           <CardTitle>Semua tagihan</CardTitle>
           <CardDescription>
@@ -176,7 +200,9 @@ export default async function InvoicesPage() {
               {invoices.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-muted-foreground">
-                    Belum ada tagihan. Klik &quot;Generate tagihan bulan ini&quot;.
+                    {leaseCount === 0
+                      ? "Belum ada tagihan. Check-in penyewa dulu di menu Kontrak."
+                      : 'Belum ada tagihan. Klik "Generate tagihan bulan ini".'}
                   </TableCell>
                 </TableRow>
               ) : (

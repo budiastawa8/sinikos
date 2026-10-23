@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlanLimitNotice } from "@/components/plan-limit-notice";
+import { SetupNextHint } from "@/components/setup-next-hint";
 import {
   Card,
   CardContent,
@@ -35,6 +36,8 @@ export default async function PropertiesPage() {
     entitlements.usage.properties,
     entitlements.limits.maxProperties,
   );
+  const totalRooms = properties.reduce((sum, p) => sum + p._count.rooms, 0);
+  const firstWithoutRooms = properties.find((p) => p._count.rooms === 0);
 
   return (
     <div className="space-y-8">
@@ -46,6 +49,23 @@ export default async function PropertiesPage() {
           Kelola lokasi kos dan jumlah kamarnya.
         </p>
       </div>
+
+      {properties.length === 0 && (
+        <SetupNextHint
+          title="Belum ada kos"
+          body="Tambah properti terlebih dahulu, lalu isi kamar di dalamnya."
+          href="#tambah-properti"
+          cta="Isi form di bawah"
+        />
+      )}
+      {properties.length > 0 && totalRooms === 0 && firstWithoutRooms && (
+        <SetupNextHint
+          title="Langkah berikutnya: tambah kamar"
+          body="Tanpa kamar, Anda belum bisa check-in penyewa atau membuat tagihan. Buka kos Anda lalu isi kode kamar dan harga sewa."
+          href={`/properties/${firstWithoutRooms.id}`}
+          cta={`Buka ${firstWithoutRooms.name}`}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -63,16 +83,19 @@ export default async function PropertiesPage() {
                 <p className="font-medium">{p.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {p._count.rooms} kamar · {p.address || "Tanpa alamat"}
+                  {p._count.rooms === 0 ? " · belum ada kamar" : ""}
                 </p>
               </Link>
             ))}
             {properties.length === 0 && (
-              <p className="text-sm text-muted-foreground">Belum ada properti.</p>
+              <p className="text-sm text-muted-foreground">
+                Belum ada properti. Pakai form di sebelah untuk menambah.
+              </p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="tambah-properti">
           <CardHeader>
             <CardTitle>Tambah properti</CardTitle>
             {!entitlements.active && entitlements.limits.maxProperties != null && (

@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SetupNextHint } from "@/components/setup-next-hint";
 import {
   Card,
   CardContent,
@@ -25,21 +26,29 @@ import {
 
 export default async function TenantsPage() {
   const { organizationId } = await requireOrg();
-  const tenants = await db.tenant.findMany({
-    where: { organizationId },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    select: {
-      id: true,
-      name: true,
-      phone: true,
-      leases: {
-        where: { status: "ACTIVE" },
-        take: 1,
-        select: { room: { select: { code: true } } },
+  const [tenants, roomCount, firstProperty] = await Promise.all([
+    db.tenant.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        leases: {
+          where: { status: "ACTIVE" },
+          take: 1,
+          select: { room: { select: { code: true } } },
+        },
       },
-    },
-  });
+    }),
+    db.room.count({ where: { property: { organizationId } } }),
+    db.property.findFirst({
+      where: { organizationId },
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    }),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -51,6 +60,23 @@ export default async function TenantsPage() {
           Data penyewa dan nomor WhatsApp untuk tagihan.
         </p>
       </div>
+
+      {roomCount === 0 && (
+        <SetupNextHint
+          title="Tambah kamar dulu"
+          body="Sebelum mendaftarkan penyewa, isi kamar di properti Anda agar nanti bisa check-in."
+          href={firstProperty ? `/properties/${firstProperty.id}` : "/properties"}
+          cta="Ke properti / kamar"
+        />
+      )}
+      {roomCount > 0 && tenants.length === 0 && (
+        <SetupNextHint
+          title="Langkah berikutnya: daftar penyewa"
+          body="Simpan nama dan nomor WhatsApp. Setelah itu Anda bisa check-in ke kamar kosong."
+          href="#tambah-penyewa"
+          cta="Isi form di bawah"
+        />
+      )}
 
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
@@ -69,27 +95,35 @@ export default async function TenantsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tenants.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell>{t.phone}</TableCell>
-                    <TableCell>{t.leases[0]?.room.code ?? "-"}</TableCell>
-                    <TableCell>
-                      <form action={deleteTenantAction}>
-                        <input type="hidden" name="id" value={t.id} />
-                        <Button type="submit" size="sm" variant="ghost">
-                          Hapus
-                        </Button>
-                      </form>
+                {tenants.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-muted-foreground">
+                      Belum ada penyewa. Pakai form &quot;Tambah penyewa&quot;.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  tenants.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell className="font-medium">{t.name}</TableCell>
+                      <TableCell>{t.phone}</TableCell>
+                      <TableCell>{t.leases[0]?.room.code ?? "-"}</TableCell>
+                      <TableCell>
+                        <form action={deleteTenantAction}>
+                          <input type="hidden" name="id" value={t.id} />
+                          <Button type="submit" size="sm" variant="ghost">
+                            Hapus
+                          </Button>
+                        </form>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="tambah-penyewa">
           <CardHeader>
             <CardTitle>Tambah penyewa</CardTitle>
           </CardHeader>

@@ -3,6 +3,7 @@ import { requireOrg } from "@/lib/tenant";
 import { db } from "@/lib/db";
 import { isProActive } from "@/lib/billing/plans";
 import { getWhatsAppQuotaUsage } from "@/lib/billing/whatsapp-quota";
+import { getSetupProgress } from "@/lib/setup-progress";
 import {
   invoiceStatusBadgeVariant,
   invoiceStatusLabel,
@@ -26,14 +27,15 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { PwaInstallHint } from "@/components/pwa-install-hint";
+import { SetupChecklist } from "@/components/setup-checklist";
 
 export default async function DashboardPage() {
   const { organizationId, organization } = await requireOrg();
   const pro = isProActive(organization);
 
-  const [rooms, occupied, unpaid, overdue, recentInvoices, waQuota] =
+  const [setup, occupied, unpaid, overdue, recentInvoices, waQuota] =
     await Promise.all([
-      db.room.count({ where: { property: { organizationId } } }),
+      getSetupProgress(organizationId),
       db.room.count({
         where: { property: { organizationId }, status: "OCCUPIED" },
       }),
@@ -66,7 +68,9 @@ export default async function DashboardPage() {
       getWhatsAppQuotaUsage(organizationId),
     ]);
 
+  const rooms = setup.counts.rooms;
   const available = rooms - occupied;
+  const next = setup.next;
 
   return (
     <div className="space-y-8">
@@ -80,14 +84,22 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex">
+          {next ? (
+            <Button asChild className="h-11 w-full sm:w-auto">
+              <Link href={next.href}>{next.cta}</Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+              <Link href="/invoices">Tagihan</Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
             <Link href="/panduan">Panduan</Link>
           </Button>
-          <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
-            <Link href="/billing">{pro ? "Paket Pro" : "Upgrade ke Pro"}</Link>
-          </Button>
         </div>
       </div>
+
+      <SetupChecklist progress={setup} />
 
       <PwaInstallHint />
 
@@ -115,7 +127,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard title="Kamar terisi" value={`${occupied}/${rooms}`} />
         <StatCard title="Kamar kosong" value={String(available)} />
         <StatCard title="Tagihan belum lunas" value={String(unpaid + overdue)} />
@@ -126,12 +138,12 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Tagihan terbaru</CardTitle>
             <CardDescription>Pantau jatuh tempo dan status bayar</CardDescription>
           </div>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" className="h-11 w-full sm:h-9 sm:w-auto">
             <Link href="/invoices">Lihat semua</Link>
           </Button>
         </CardHeader>
@@ -150,7 +162,31 @@ export default async function DashboardPage() {
               {recentInvoices.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-muted-foreground">
-                    Belum ada tagihan. Generate dari menu Tagihan.
+                    {next?.id === "invoices" ? (
+                      <>
+                        Belum ada tagihan.{" "}
+                        <Link
+                          href="/invoices"
+                          className="font-medium text-primary underline"
+                        >
+                          Buat tagihan bulan ini
+                        </Link>
+                        .
+                      </>
+                    ) : next ? (
+                      <>
+                        Belum ada tagihan. Selesaikan dulu:{" "}
+                        <Link
+                          href={next.href}
+                          className="font-medium text-primary underline"
+                        >
+                          {next.title}
+                        </Link>
+                        .
+                      </>
+                    ) : (
+                      "Belum ada tagihan."
+                    )}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -177,9 +213,11 @@ export default async function DashboardPage() {
 function StatCard({ title, value }: { title: string; value: string }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="text-3xl">{value}</CardTitle>
+      <CardHeader className="space-y-1 p-3 sm:p-6 sm:pb-2">
+        <CardDescription className="text-xs sm:text-sm">{title}</CardDescription>
+        <CardTitle className="text-xl leading-tight sm:text-3xl">
+          {value}
+        </CardTitle>
       </CardHeader>
     </Card>
   );

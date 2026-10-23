@@ -79,37 +79,51 @@ export default async function PropertyDetailPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {property.rooms.map((room) => (
-                  <TableRow key={room.id}>
-                    <TableCell className="font-medium">{room.code}</TableCell>
-                    <TableCell>{formatRupiah(room.price)}</TableCell>
-                    <TableCell>
-                      <Badge variant={roomStatusBadgeVariant(room.status)}>
-                        {roomStatusLabel(room.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <form
-                        action={updateRoomStatusAction}
-                        className="flex flex-col gap-2 sm:flex-row"
-                      >
-                        <input type="hidden" name="roomId" value={room.id} />
-                        <select
-                          name="status"
-                          defaultValue={room.status}
-                          className="h-10 min-w-0 flex-1 rounded-md border px-2 text-sm sm:h-9"
-                        >
-                          <option value="AVAILABLE">Kosong</option>
-                          <option value="OCCUPIED">Terisi</option>
-                          <option value="MAINTENANCE">Perawatan</option>
-                        </select>
-                        <Button type="submit" size="sm" variant="outline" className="h-10 sm:h-9">
-                          Simpan
-                        </Button>
-                      </form>
+                {property.rooms.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-muted-foreground">
+                      Belum ada kamar. Isi form &quot;Tambah kamar&quot; di
+                      sebelah — contoh kode: A1, harga sewa bulanan.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  property.rooms.map((room) => (
+                    <TableRow key={room.id}>
+                      <TableCell className="font-medium">{room.code}</TableCell>
+                      <TableCell>{formatRupiah(room.price)}</TableCell>
+                      <TableCell>
+                        <Badge variant={roomStatusBadgeVariant(room.status)}>
+                          {roomStatusLabel(room.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <form
+                          action={updateRoomStatusAction}
+                          className="flex flex-col gap-2 sm:flex-row"
+                        >
+                          <input type="hidden" name="roomId" value={room.id} />
+                          <select
+                            name="status"
+                            defaultValue={room.status}
+                            className="h-10 min-w-0 flex-1 rounded-md border px-2 text-sm sm:h-9"
+                          >
+                            <option value="AVAILABLE">Kosong</option>
+                            <option value="OCCUPIED">Terisi</option>
+                            <option value="MAINTENANCE">Perawatan</option>
+                          </select>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant="outline"
+                            className="h-10 sm:h-9"
+                          >
+                            Simpan
+                          </Button>
+                        </form>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
