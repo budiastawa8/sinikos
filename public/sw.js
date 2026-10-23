@@ -1,9 +1,12 @@
-/* SiniKos service worker — cache aset statis; navigasi & API selalu network-first. */
-const CACHE = "sinikos-static-v1";
+/* SiniKos service worker — cache aset statis; navigasi & API selalu network-first.
+ * Naikkan CACHE (vN) setiap kali ikon/manifest branding diganti agar klien buang cache lama. */
+const CACHE = "sinikos-static-v2";
 const PRECACHE = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png",
+  "/icons/favicon-32.png",
+  "/icons/favicon-16.png",
   "/manifest.webmanifest",
 ];
 
