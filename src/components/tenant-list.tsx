@@ -41,22 +41,25 @@ export function TenantList({ tenants }: { tenants: TenantListItem[] }) {
 
   return (
     <Card className="xl:col-span-2">
-      <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1.5">
-          <CardTitle>Daftar penyewa</CardTitle>
-          <CardDescription>
-            {q
-              ? `${filtered.length} dari ${tenants.length} penyewa`
-              : `${tenants.length} penyewa`}
-          </CardDescription>
-        </div>
-        {tenants.length > 0 && (
+      <CardHeader>
+        {tenants.length > 0 ? (
           <ListSearch
             value={query}
             onChange={setQuery}
             placeholder="Cari nama, WhatsApp, kamar…"
-            className="sm:max-w-xs"
-          />
+          >
+            <CardTitle>Daftar penyewa</CardTitle>
+            <CardDescription>
+              {q
+                ? `${filtered.length} dari ${tenants.length} penyewa`
+                : `${tenants.length} penyewa`}
+            </CardDescription>
+          </ListSearch>
+        ) : (
+          <div className="space-y-1.5">
+            <CardTitle>Daftar penyewa</CardTitle>
+            <CardDescription>0 penyewa</CardDescription>
+          </div>
         )}
       </CardHeader>
       <CardContent className="-mx-2 overflow-x-auto sm:mx-0">

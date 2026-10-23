@@ -78,24 +78,27 @@ export function ArrearsReportTable({
   return (
     <Card>
       <CardHeader className="gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-1.5">
+        {rows.length > 0 ? (
+          <ListSearch
+            value={query}
+            onChange={setQuery}
+            placeholder="Cari penyewa, kamar…"
+          >
             <CardTitle>Tunggakan</CardTitle>
             <CardDescription>
               {q
                 ? `${filtered.length} dari ${rows.length} tagihan`
                 : "Tagihan belum lunas, sebagian, atau terlambat."}
             </CardDescription>
+          </ListSearch>
+        ) : (
+          <div className="space-y-1.5">
+            <CardTitle>Tunggakan</CardTitle>
+            <CardDescription>
+              Tagihan belum lunas, sebagian, atau terlambat.
+            </CardDescription>
           </div>
-          {rows.length > 0 && (
-            <ListSearch
-              value={query}
-              onChange={setQuery}
-              placeholder="Cari penyewa, kamar…"
-              className="sm:max-w-xs"
-            />
-          )}
-        </div>
+        )}
         <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:self-end">
           <ExportCsvButton
             filename={`tunggakan-sinikos.csv`}
@@ -241,24 +244,27 @@ export function OccupancyReportTable({
   return (
     <Card>
       <CardHeader className="gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-1.5">
+        {rows.length > 0 ? (
+          <ListSearch
+            value={query}
+            onChange={setQuery}
+            placeholder="Cari properti, kamar, penyewa…"
+          >
             <CardTitle>Okupansi kamar</CardTitle>
             <CardDescription>
               {q
                 ? `${filtered.length} dari ${rows.length} kamar`
                 : "Status tiap kamar dan penyewa aktif / menunggu bayar."}
             </CardDescription>
+          </ListSearch>
+        ) : (
+          <div className="space-y-1.5">
+            <CardTitle>Okupansi kamar</CardTitle>
+            <CardDescription>
+              Status tiap kamar dan penyewa aktif / menunggu bayar.
+            </CardDescription>
           </div>
-          {rows.length > 0 && (
-            <ListSearch
-              value={query}
-              onChange={setQuery}
-              placeholder="Cari properti, kamar, penyewa…"
-              className="sm:max-w-xs"
-            />
-          )}
-        </div>
+        )}
         <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:self-end">
           <ExportCsvButton
             filename={`okupansi-sinikos.csv`}

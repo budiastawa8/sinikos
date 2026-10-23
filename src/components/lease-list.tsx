@@ -72,22 +72,25 @@ export function LeaseList({
 
   return (
     <Card className="xl:col-span-2">
-      <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1.5">
-          <CardTitle>Daftar kontrak</CardTitle>
-          <CardDescription>
-            {q
-              ? `${filtered.length} dari ${leases.length} kontrak`
-              : `${leases.length} kontrak`}
-          </CardDescription>
-        </div>
-        {leases.length > 0 && (
+      <CardHeader>
+        {leases.length > 0 ? (
           <ListSearch
             value={query}
             onChange={setQuery}
             placeholder="Cari penyewa, kamar, status…"
-            className="sm:max-w-xs"
-          />
+          >
+            <CardTitle>Daftar kontrak</CardTitle>
+            <CardDescription>
+              {q
+                ? `${filtered.length} dari ${leases.length} kontrak`
+                : `${leases.length} kontrak`}
+            </CardDescription>
+          </ListSearch>
+        ) : (
+          <div className="space-y-1.5">
+            <CardTitle>Daftar kontrak</CardTitle>
+            <CardDescription>0 kontrak</CardDescription>
+          </div>
         )}
       </CardHeader>
       <CardContent className="-mx-2 overflow-x-auto sm:mx-0">

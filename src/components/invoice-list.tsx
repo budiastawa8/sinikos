@@ -77,22 +77,25 @@ export function InvoiceList({
 
   return (
     <Card id="daftar-tagihan">
-      <CardHeader className="gap-3 pb-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1.5">
-          <CardTitle>Semua tagihan</CardTitle>
-          <CardDescription>
-            {q
-              ? `${filtered.length} dari ${invoices.length} tagihan`
-              : `${invoices.length}${invoices.length >= 60 ? "+" : ""} tagihan terbaru${invoices.length >= 60 ? " (maks. 60 ditampilkan)" : ""}`}
-          </CardDescription>
-        </div>
-        {invoices.length > 0 && (
+      <CardHeader className="pb-3">
+        {invoices.length > 0 ? (
           <ListSearch
             value={query}
             onChange={setQuery}
             placeholder="Cari nama, kamar, periode…"
-            className="sm:max-w-xs"
-          />
+          >
+            <CardTitle>Semua tagihan</CardTitle>
+            <CardDescription>
+              {q
+                ? `${filtered.length} dari ${invoices.length} tagihan`
+                : `${invoices.length}${invoices.length >= 60 ? "+" : ""} tagihan terbaru${invoices.length >= 60 ? " (maks. 60 ditampilkan)" : ""}`}
+            </CardDescription>
+          </ListSearch>
+        ) : (
+          <div className="space-y-1.5">
+            <CardTitle>Semua tagihan</CardTitle>
+            <CardDescription>0 tagihan terbaru</CardDescription>
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-3 p-3 pt-0 sm:p-6 sm:pt-0">
