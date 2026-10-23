@@ -75,12 +75,15 @@ export default async function PropertiesPage() {
               <Link
                 key={p.id}
                 href={`/properties/${p.id}`}
-                className="block rounded-lg border px-4 py-3 transition-colors hover:bg-accent"
+                className="block rounded-lg border border-primary/20 bg-primary/[0.04] px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/[0.08]"
               >
-                <p className="font-medium">{p.name}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="inline-flex max-w-full items-center rounded-md bg-primary/15 px-2.5 py-1 text-sm font-semibold text-primary">
+                  <span className="truncate">{p.name}</span>
+                </p>
+                <p className="mt-1.5 text-sm text-muted-foreground">
                   {p._count.rooms} kamar · {p.address || "Tanpa alamat"}
                   {p._count.rooms === 0 ? " · belum ada kamar" : ""}
+                  <span className="text-primary/80"> · kelola kamar</span>
                 </p>
               </Link>
             ))}
