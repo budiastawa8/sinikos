@@ -10,7 +10,7 @@ Setiap perubahan tampilan atau halaman baru **wajib** ramah terhadap viewport mo
 ## Wajib
 
 - Desain dengan pendekatan mobile-first; uji secara mental di lebar ~375px dan ~768px.
-- Navigasi app: sidebar desktop; di mobile gunakan **bottom tabs** untuk menu utama (Dashboard, Tagihan, Penyewa, Kontrak, Properti) + header + drawer/sheet untuk menu sekunder (Laporan, Tim, Langganan, Panduan, Pengaturan). Jangan sidebar tetap `w-64` yang menekan konten.
+- Navigasi app: sidebar desktop; di mobile gunakan **bottom tabs** untuk menu utama (Dashboard, Penyewa, Kontrak, Tagihan) + tab **Lainnya** yang membuka drawer/sheet (Properti, Laporan, Tim, Langganan, Panduan, Pengaturan). Header ☰ membuka drawer yang sama. Jangan sidebar tetap `w-64` yang menekan konten.
 - Hindari layout horizontal kaku tanpa breakpoint (`flex` + lebar tetap yang overflow di HP).
 - Tabel lebar harus dalam kontainer `overflow-x-auto`; aksi baris boleh ditumpuk di mobile.
 - Form/kartu: lebar penuh di mobile dengan padding aman (`px-4`+); jangan mengandalkan lebar desktop saja.

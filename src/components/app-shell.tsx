@@ -11,7 +11,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 
 export function AppShell({
@@ -23,7 +22,7 @@ export function AppShell({
   planLabel: string;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -32,32 +31,20 @@ export function AppShell({
         <AppNav orgName={orgName} planLabel={planLabel} mode="full" />
       </aside>
 
-      {/* Mobile top bar + drawer (menu sekunder) */}
+      {/* Mobile top bar */}
       <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-card/95 px-3 backdrop-blur md:hidden">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              aria-label="Menu lainnya"
-            >
-              <Menu className="size-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Menu lainnya</SheetTitle>
-            </SheetHeader>
-            <AppNav
-              orgName={orgName}
-              planLabel={planLabel}
-              mode="more"
-              onNavigate={() => setOpen(false)}
-            />
-          </SheetContent>
-        </Sheet>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="shrink-0"
+          aria-label="Menu lainnya"
+          aria-expanded={moreOpen}
+          aria-haspopup="dialog"
+          onClick={() => setMoreOpen(true)}
+        >
+          <Menu className="size-5" />
+        </Button>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
             SiniKos
@@ -72,11 +59,28 @@ export function AppShell({
         </Link>
       </header>
 
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent side="left" className="p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Menu lainnya</SheetTitle>
+          </SheetHeader>
+          <AppNav
+            orgName={orgName}
+            planLabel={planLabel}
+            mode="more"
+            onNavigate={() => setMoreOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
       <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-24 sm:px-6 md:p-8 md:pb-8">
         {children}
       </main>
 
-      <AppBottomNav />
+      <AppBottomNav
+        moreOpen={moreOpen}
+        onOpenMore={() => setMoreOpen(true)}
+      />
     </div>
   );
 }

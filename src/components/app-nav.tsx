@@ -26,17 +26,17 @@ export type AppNavLink = {
   icon: LucideIcon;
 };
 
-/** Tab bawah mobile (urut sentuhan). */
+/** Tab bawah mobile (4 link + tab Lainnya di AppBottomNav). */
 export const MOBILE_TAB_LINKS: AppNavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/invoices", label: "Tagihan", icon: FileText },
   { href: "/tenants", label: "Penyewa", icon: Users },
   { href: "/leases", label: "Kontrak", icon: DoorOpen },
-  { href: "/properties", label: "Properti", icon: Building2 },
+  { href: "/invoices", label: "Tagihan", icon: FileText },
 ];
 
-/** Item sekunder — drawer mobile + bagian bawah sidebar desktop. */
+/** Item sekunder — drawer mobile (Properti di atas). */
 export const APP_MORE_LINKS: AppNavLink[] = [
+  { href: "/properties", label: "Properti", icon: Building2 },
   { href: "/laporan", label: "Laporan", icon: ChartColumn },
   { href: "/staff", label: "Tim", icon: UserCog },
   { href: "/billing", label: "Langganan", icon: CreditCard },
@@ -51,17 +51,25 @@ export const APP_NAV_LINKS: AppNavLink[] = [
   { href: "/tenants", label: "Penyewa", icon: Users },
   { href: "/leases", label: "Kontrak", icon: DoorOpen },
   { href: "/invoices", label: "Tagihan", icon: FileText },
-  ...APP_MORE_LINKS,
+  { href: "/laporan", label: "Laporan", icon: ChartColumn },
+  { href: "/staff", label: "Tim", icon: UserCog },
+  { href: "/billing", label: "Langganan", icon: CreditCard },
+  { href: "/panduan", label: "Panduan", icon: BookOpen },
+  { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 
 export function navLinkActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+export function isMoreNavActive(pathname: string) {
+  return APP_MORE_LINKS.some((link) => navLinkActive(pathname, link.href));
+}
+
 type AppNavProps = {
   orgName: string;
   planLabel: string;
-  /** `full` = semua link (desktop). `more` = Langganan/Panduan/Pengaturan (drawer mobile). */
+  /** `full` = semua link (desktop). `more` = drawer mobile. */
   mode?: "full" | "more";
   onNavigate?: () => void;
   className?: string;
@@ -93,8 +101,8 @@ export function AppNav({
         </Link>
         {mode === "more" && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Menu utama ada di bilah bawah. Di sini: langganan, panduan, dan
-            pengaturan.
+            Menu utama ada di bilah bawah. Di sini: properti, laporan,
+            langganan, panduan, dan pengaturan.
           </p>
         )}
       </div>

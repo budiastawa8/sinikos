@@ -2,11 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOBILE_TAB_LINKS, navLinkActive } from "@/components/app-nav";
+import {
+  MOBILE_TAB_LINKS,
+  isMoreNavActive,
+  navLinkActive,
+} from "@/components/app-nav";
 
-export function AppBottomNav() {
+export function AppBottomNav({
+  moreOpen,
+  onOpenMore,
+}: {
+  moreOpen?: boolean;
+  onOpenMore: () => void;
+}) {
   const pathname = usePathname();
+  const moreActive = isMoreNavActive(pathname);
 
   return (
     <nav
@@ -41,6 +53,30 @@ export function AppBottomNav() {
             </li>
           );
         })}
+        <li className="min-w-0">
+          <button
+            type="button"
+            onClick={onOpenMore}
+            aria-label="Menu lainnya"
+            aria-expanded={moreOpen ?? false}
+            aria-haspopup="dialog"
+            className={cn(
+              "flex h-full min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium sm:text-xs",
+              moreActive || moreOpen
+                ? "text-primary"
+                : "text-muted-foreground active:text-foreground",
+            )}
+          >
+            <Menu
+              className={cn(
+                "size-5 shrink-0",
+                (moreActive || moreOpen) && "stroke-[2.25px]",
+              )}
+              aria-hidden
+            />
+            <span className="truncate">Lainnya</span>
+          </button>
+        </li>
       </ul>
     </nav>
   );
